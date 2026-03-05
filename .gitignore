@@ -29,7 +29,6 @@ lerna-debug.log*
 /cert
 /coverage
 /database
-Dockerfile
 docker-compose.yaml
 db-docker-compose.yaml
 
