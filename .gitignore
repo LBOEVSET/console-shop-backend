@@ -3,6 +3,7 @@
 /node_modules
 /build
 /tmp
+package-lock.json
 
 # Logs
 logs
@@ -22,3 +23,15 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+
+/prisma
+/k8s
+/cert
+/coverage
+/database
+Dockerfile
+docker-compose.yaml
+db-docker-compose.yaml
+
+
+/generated/prisma
