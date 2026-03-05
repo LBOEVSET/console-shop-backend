@@ -33,3 +33,6 @@ steps:
 
 images:
 - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
