@@ -8,8 +8,8 @@ export class OmiseService {
 
   constructor(private config: ConfigService) {
     this.omise = Omise({
-      publicKey: this.config.getOrThrow('OMISE_PUBLIC_KEY'),
-      secretKey: this.config.getOrThrow('OMISE_SECRET_KEY'),
+      publicKey: process.env.OMISE_PUBLIC_KEY,//this.config.getOrThrow('OMISE_PUBLIC_KEY'),
+      secretKey: process.env.OMISE_SECRET_KEY,//this.config.getOrThrow('OMISE_SECRET_KEY'),
     });
   }
 
