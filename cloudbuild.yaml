@@ -1,22 +1,7 @@
 steps:
 
-# 1️⃣ Update Kubernetes secret from .env
-- name: 'gcr.io/cloud-builders/kubectl'
-  id: 'update-secret'
-  entrypoint: bash
-  args:
-    - '-c'
-    - |
-      kubectl create secret generic backend-secret \
-        --from-env-file=.env \
-        --dry-run=client -o yaml | kubectl apply -f -
-  env:
-    - 'CLOUDSDK_COMPUTE_REGION=asia-southeast1'
-    - 'CLOUDSDK_CONTAINER_CLUSTER=console-cluster'
-
-# 2️⃣ Build docker image
+# Build docker image
 - name: 'gcr.io/cloud-builders/docker'
-  id: 'build-image'
   args:
     [
       'build',
@@ -25,18 +10,16 @@ steps:
       '.'
     ]
 
-# 3️⃣ Push image
+# Push image
 - name: 'gcr.io/cloud-builders/docker'
-  id: 'push-image'
   args:
     [
       'push',
       'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
     ]
 
-# 4️⃣ Deploy to GKE
+# Deploy to GKE
 - name: 'gcr.io/cloud-builders/kubectl'
-  id: 'deploy'
   args:
     [
       'set',
@@ -50,6 +33,3 @@ steps:
 
 images:
 - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
-
-options:
-  logging: CLOUD_LOGGING_ONLY
