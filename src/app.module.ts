@@ -20,10 +20,12 @@ import { LoggerModule } from './core/logger/logger.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { ArticlesModule } from './modules/articles/articles.module';
+import { HealthCheckModule } from './modules/health-check/health-check.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    HealthCheckModule,
     PrismaModule,
     AuthModule,
     ProductsModule,
