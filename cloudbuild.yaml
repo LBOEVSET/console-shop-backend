@@ -1,38 +1,72 @@
 steps:
 
-# Build docker image
+# 1️⃣ Build Docker image
+
 - name: 'gcr.io/cloud-builders/docker'
   args:
-    [
-      'build',
-      '-t',
-      'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA',
-      '.'
-    ]
+  [
+  'build',
+  '-t',
+  'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA',
+  '.'
+  ]
 
-# Push image
+# 2️⃣ Push Docker image
+
 - name: 'gcr.io/cloud-builders/docker'
   args:
-    [
-      'push',
-      'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
-    ]
+  [
+  'push',
+  'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
+  ]
 
-# Deploy to GKE
+# 3️⃣ Update Kubernetes secret from .env
+
+- name: 'gcr.io/cloud-builders/kubectl'
+  entrypoint: 'bash'
+  args:
+
+  - '-c'
+  - |
+    kubectl create secret generic backend-secret 
+    --from-env-file=.env 
+    --dry-run=client -o yaml | kubectl apply -f -
+    env:
+  - 'CLOUDSDK_COMPUTE_REGION=asia-southeast1'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=console-cluster'
+
+# 4️⃣ Deploy new Docker image
+
 - name: 'gcr.io/cloud-builders/kubectl'
   args:
-    [
-      'set',
-      'image',
-      'deployment/console-backend',
-      'console-backend=asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
-    ]
+  [
+  'set',
+  'image',
+  'deployment/console-backend',
+  'console-backend=asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
+  ]
   env:
-    - 'CLOUDSDK_COMPUTE_REGION=asia-southeast1'
-    - 'CLOUDSDK_CONTAINER_CLUSTER=console-cluster'
+
+  - 'CLOUDSDK_COMPUTE_REGION=asia-southeast1'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=console-cluster'
+
+# 5️⃣ Restart deployment so new secrets apply
+
+- name: 'gcr.io/cloud-builders/kubectl'
+  args:
+  [
+  'rollout',
+  'restart',
+  'deployment/console-backend'
+  ]
+  env:
+
+  - 'CLOUDSDK_COMPUTE_REGION=asia-southeast1'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=console-cluster'
 
 images:
+
 - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
 
 options:
-  logging: CLOUD_LOGGING_ONLY
+logging: CLOUD_LOGGING_ONLY
