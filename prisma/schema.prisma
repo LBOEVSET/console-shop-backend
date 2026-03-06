@@ -1,0 +1,320 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String          @id @default(uuid())
+  email           String          @unique
+  username        String          @unique
+  passwordHash    String?
+  provider        String?
+  providerId      String?
+  role            UserRole        @default(CUSTOMER)
+  firstName       String
+  lastName        String
+  profileImage    String?
+  backgroundImage String?
+  phone           String?
+  accessToken     String?
+  refreshToken    String?
+  vipExpiredAt    DateTime?
+  status          Int             @default(1)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @default(now()) @updatedAt
+  addresses       Address[]
+  adminSessions   ChatSession[]   @relation("AdminSessions")
+  chatSessions    ChatSession[]   @relation("CustomerSessions")
+  orders          Order[]
+  reviews         Review[]
+  tickets         SupportTicket[]
+
+  @@index([status])
+}
+
+model UserStatus {
+  id   Int    @id
+  name String @unique
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  userId     String
+  fullName   String
+  phone      String
+  line1      String
+  line2      String?
+  city       String
+  province   String
+  postalCode String
+  country    String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model Platform {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  products Product[]
+}
+
+model Category {
+  id       String            @id @default(uuid())
+  name     String            @unique
+  slug     String?           @unique
+  products ProductCategory[]
+}
+
+model Product {
+  id          String            @id @default(uuid())
+  title       String
+  slug        String            @unique
+  description String
+  price       Decimal
+  stock       Int               @default(0)
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @default(now()) @updatedAt
+  platformId  String
+  orderItems  OrderItem[]
+  platform    Platform          @relation(fields: [platformId], references: [id])
+  categories  ProductCategory[]
+  media       ProductMedia[]
+  reviews     Review[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model ProductMedia {
+  id        String    @id @default(uuid())
+  productId String
+  type      MediaType
+  url       String
+  sortOrder Int
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+}
+
+model ProductCategory {
+  productId  String
+  categoryId String
+  isPrimary  Boolean  @default(false)
+  sortOrder  Int      @default(0)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  rating     Int
+  comment    String
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  productId  String
+  userId     String
+  product    Product  @relation(fields: [productId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([productId])
+  @@index([isApproved])
+}
+
+model PromoCode {
+  id            String       @id @default(uuid())
+  code          String       @unique
+  discountType  DiscountType
+  discountValue Decimal
+  minOrder      Decimal?
+  maxUsage      Int?
+  usedCount     Int          @default(0)
+  expiresAt     DateTime?
+  isActive      Boolean      @default(true)
+  orders        Order[]
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  orderNumber   String      @unique
+  status        OrderStatus @default(PENDING_PAYMENT)
+  subtotal      Decimal
+  discount      Decimal     @default(0)
+  total         Decimal
+  paymentMethod String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @default(now()) @updatedAt
+  userId        String
+  promoCodeId   String?
+  promoCode     PromoCode?  @relation(fields: [promoCodeId], references: [id])
+  user          User        @relation(fields: [userId], references: [id])
+  items         OrderItem[]
+  payment       Payment?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  title     String
+  price     Decimal
+  quantity  Int
+  orderId   String
+  productId String
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  provider         String
+  chargeId         String?       @unique
+  status           PaymentStatus @default(PENDING)
+  amount           Decimal
+  currency         String
+  rawPayload       Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @default(now()) @updatedAt
+  orderId          String        @unique
+  webhookProcessed Boolean       @default(false)
+  order            Order         @relation(fields: [orderId], references: [id])
+
+  @@index([chargeId])
+}
+
+model Article {
+  id          String         @id @default(uuid())
+  type        ArticleType
+  title       String
+  slug        String         @unique
+  summary     String
+  content     String
+  reference   String?
+  isPublished Boolean        @default(true)
+  publishedAt DateTime       @default(now())
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @default(now()) @updatedAt
+  media       ArticleMedia[]
+
+  @@index([type])
+  @@index([publishedAt])
+  @@index([isPublished])
+}
+
+model ArticleMedia {
+  id        String    @id @default(uuid())
+  articleId String
+  type      MediaType
+  url       String
+  sortOrder Int       @default(0)
+  article   Article   @relation(fields: [articleId], references: [id])
+
+  @@index([articleId])
+}
+
+model SupportTicket {
+  id          String           @id @default(uuid())
+  title       String
+  description String
+  status      TicketStatus     @default(OPEN)
+  priority    String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @default(now()) @updatedAt
+  userId      String
+  messages    SupportMessage[]
+  user        User             @relation(fields: [userId], references: [id])
+}
+
+model SupportMessage {
+  id        String        @id @default(uuid())
+  message   String
+  sender    String
+  createdAt DateTime      @default(now())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id])
+}
+
+model ChatSession {
+  id         String        @id @default(uuid())
+  status     ChatStatus    @default(WAITING)
+  startedAt  DateTime?
+  endedAt    DateTime?
+  customerId String?
+  guestId    String?
+  adminId    String?
+  messages   ChatMessage[]
+  admin      User?         @relation("AdminSessions", fields: [adminId], references: [id])
+  customer   User?         @relation("CustomerSessions", fields: [customerId], references: [id])
+
+  @@index([guestId])
+  @@index([customerId])
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid())
+  message   String
+  sender    String
+  createdAt DateTime    @default(now())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id])
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum ChatStatus {
+  WAITING
+  ACTIVE
+  CLOSED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  EXTERNAL_VIDEO
+}
+
+enum ArticleType {
+  NEWS
+  PROMOTION
+  ANNOUNCEMENT
+}
