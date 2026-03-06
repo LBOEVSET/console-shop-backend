@@ -1,6 +1,25 @@
 steps:
 
-# Build docker image
+# 1️⃣ Create / update Kubernetes secret
+- name: 'gcr.io/cloud-builders/kubectl'
+  id: 'update-secret'
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      kubectl create secret generic backend-secret \
+        --from-literal=DATABASE_URL="$DATABASE_URL" \
+        --from-literal=JWT_SECRET="$JWT_SECRET" \
+        --from-literal=JWT_REFRESH_SECRET="$JWT_REFRESH_SECRET" \
+        --from-literal=OMISE_SECRET_KEY="$OMISE_SECRET_KEY" \
+        --from-literal=OMISE_PUBLIC_KEY="$OMISE_PUBLIC_KEY" \
+        --from-literal=OMISE_WEBHOOK_SECRET="$OMISE_WEBHOOK_SECRET" \
+        --dry-run=client -o yaml | kubectl apply -f -
+  env:
+    - 'CLOUDSDK_COMPUTE_REGION=asia-southeast1'
+    - 'CLOUDSDK_CONTAINER_CLUSTER=console-cluster'
+
+# 2️⃣ Build image
 - name: 'gcr.io/cloud-builders/docker'
   args:
     [
@@ -10,7 +29,7 @@ steps:
       '.'
     ]
 
-# Push image
+# 3️⃣ Push image
 - name: 'gcr.io/cloud-builders/docker'
   args:
     [
@@ -18,7 +37,7 @@ steps:
       'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
     ]
 
-# Deploy to GKE
+# 4️⃣ Deploy new image
 - name: 'gcr.io/cloud-builders/kubectl'
   args:
     [
@@ -30,9 +49,6 @@ steps:
   env:
     - 'CLOUDSDK_COMPUTE_REGION=asia-southeast1'
     - 'CLOUDSDK_CONTAINER_CLUSTER=console-cluster'
-
-images:
-- 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
 
 options:
   logging: CLOUD_LOGGING_ONLY
