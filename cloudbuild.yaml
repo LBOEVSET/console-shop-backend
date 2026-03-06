@@ -26,6 +26,8 @@ steps:
         --from-literal=OMISE_SECRET_KEY="$_OMISE_SECRET_KEY" \
         --from-literal=OMISE_PUBLIC_KEY="$_OMISE_PUBLIC_KEY" \
         --from-literal=OMISE_WEBHOOK_SECRET="$_OMISE_WEBHOOK_SECRET" \
+        --from-literal=REDIS_HOST="$_REDIS_HOST" \
+        --from-literal=REDIS_PORT="$_REDIS_PORT" \
         --dry-run=client -o yaml | kubectl apply -f -
   env:
     - CLOUDSDK_COMPUTE_REGION=asia-southeast1
