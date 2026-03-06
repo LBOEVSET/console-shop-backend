@@ -29,7 +29,7 @@ export class PaymentsService {
   ) {
     const expected = createHmac(
       'sha256',
-      process.env.OMISE_WEBHOOK_SECRET ?? '',//this.config.getOrThrow('OMISE_WEBHOOK_SECRET'),
+      this.config.getOrThrow('OMISE_WEBHOOK_SECRET'),
     )
       .update(rawBody)
       .digest('hex');

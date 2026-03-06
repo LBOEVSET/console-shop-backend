@@ -39,7 +39,7 @@ import { ArticlesModule } from './modules/articles/articles.module';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: process.env.JWT_SECRET,//config.getOrThrow<string>('JWT_SECRET'),
+        secret: config.getOrThrow<string>('JWT_SECRET'),
         signOptions: { expiresIn: '15m' },
       }),
     }),

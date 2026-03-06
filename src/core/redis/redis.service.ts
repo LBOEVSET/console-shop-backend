@@ -21,7 +21,7 @@ export class RedisService
     private readonly logger: LoggerService,
     private readonly requestContext: RequestContextService
   ) {
-    const redisUrl = process.env.REDIS_URL; //this.config.get<string>('REDIS_URL');
+    const redisUrl = this.config.get<string>('REDIS_URL');
 
     if (redisUrl) {
       this.client = new Redis(redisUrl, {
@@ -30,9 +30,9 @@ export class RedisService
       });
     } else {
       this.client = new Redis({
-        host: process.env.REDIS_HOST ?? 'localhost', //this.config.get<string>('REDIS_HOST', 'localhost'),
-        port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379, //this.config.get<number>('REDIS_PORT', 6379),
-        password: process.env.REDIS_PASSWORD ?? '', //this.config.get<string>('REDIS_PASSWORD'),
+        host: this.config.get<string>('REDIS_HOST', 'localhost'),
+        port: this.config.get<number>('REDIS_PORT', 6379),
+        password: this.config.get<string>('REDIS_PASSWORD'),
         lazyConnect: true,
         maxRetriesPerRequest: 3,
       });
