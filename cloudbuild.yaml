@@ -8,12 +8,12 @@ steps:
     - -c
     - |
       kubectl create secret generic backend-secret \
-        --from-literal=DATABASE_URL="$DATABASE_URL" \
-        --from-literal=JWT_SECRET="$JWT_SECRET" \
-        --from-literal=JWT_REFRESH_SECRET="$JWT_REFRESH_SECRET" \
-        --from-literal=OMISE_SECRET_KEY="$OMISE_SECRET_KEY" \
-        --from-literal=OMISE_PUBLIC_KEY="$OMISE_PUBLIC_KEY" \
-        --from-literal=OMISE_WEBHOOK_SECRET="$OMISE_WEBHOOK_SECRET" \
+        --from-literal=DATABASE_URL="$_DATABASE_URL" \
+        --from-literal=JWT_SECRET="$_JWT_SECRET" \
+        --from-literal=JWT_REFRESH_SECRET="$_JWT_REFRESH_SECRET" \
+        --from-literal=OMISE_SECRET_KEY="$_OMISE_SECRET_KEY" \
+        --from-literal=OMISE_PUBLIC_KEY="$_OMISE_PUBLIC_KEY" \
+        --from-literal=OMISE_WEBHOOK_SECRET="$_OMISE_WEBHOOK_SECRET" \
         --dry-run=client -o yaml | kubectl apply -f -
   env:
     - 'CLOUDSDK_COMPUTE_REGION=asia-southeast1'
