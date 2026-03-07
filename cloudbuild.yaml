@@ -28,6 +28,7 @@ steps:
         --from-literal=OMISE_WEBHOOK_SECRET="$_OMISE_WEBHOOK_SECRET" \
         --from-literal=REDIS_HOST="$_REDIS_HOST" \
         --from-literal=REDIS_PORT="$_REDIS_PORT" \
+        --from-literal=PORT="$_PORT" \
         --dry-run=client -o yaml | kubectl apply -f -
   env:
     - CLOUDSDK_COMPUTE_REGION=asia-southeast1
