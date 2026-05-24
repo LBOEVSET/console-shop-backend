@@ -1,6 +1,7 @@
 import "dotenv/config";
-import { PrismaClient, DiscountType } from "@prisma/client";
+import { PrismaClient, DiscountType, UserRole } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import bcrypt from "bcrypt";
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
@@ -13,6 +14,26 @@ const prisma = new PrismaClient({
 async function main() {
 
   console.log("Seeding database...")
+
+  // =========================
+  // DEFAULT SUPERADMIN
+  // =========================
+  const adminPasswordHash = await bcrypt.hash("20011966", 10);
+  await prisma.user.upsert({
+    where: { username: "superadmin" },
+    update: {},
+    create: {
+      username:    "superadmin",
+      email:       "superadmin@arcadezenter.com",
+      passwordHash: adminPasswordHash,
+      firstName:   "Super",
+      lastName:    "Admin",
+      phone:       "+66000000000",
+      role:        UserRole.ADMIN,
+      status:      1,
+    },
+  });
+  console.log("  ✓ superadmin user created");
   // =========================
   // USER STATUS
   // =========================

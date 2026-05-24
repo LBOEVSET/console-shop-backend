@@ -39,6 +39,23 @@ export class AuthController {
     private jwtService: JwtService
   ) {}
 
+  /**
+   * Returns cookie options appropriate for the current environment.
+   *
+   * SameSite=None requires Secure=true (Chrome 80+ enforcement).
+   * On local HTTP we use SameSite=Lax instead so cookies are stored.
+   * On production (HTTPS, cross-origin) we use SameSite=None + Secure.
+   */
+  private cookieOpts(maxAge: number) {
+    const isSecure = process.env.NODE_ENV !== 'local';
+    return {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: (isSecure ? 'none' : 'lax') as 'none' | 'lax',
+      maxAge,
+    };
+  }
+
   @Public()
   @Post('guest/init')
   @Throttle({ auth: { limit: 5, ttl: 60 } })
@@ -46,19 +63,8 @@ export class AuthController {
     const guestId = randomUUID();
     const tokens = await this.authService.initGuest(guestId);
 
-    res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'local' ? false : true,
-      sameSite: "none",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'local' ? false : true,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('accessToken', tokens.accessToken, this.cookieOpts(15 * 60 * 1000));
+    res.cookie('refreshToken', tokens.refreshToken, this.cookieOpts(7 * 24 * 60 * 60 * 1000));
 
     return { message: 'Guest session created' };
   }
@@ -108,12 +114,7 @@ export class AuthController {
     const otp = await this.otpService.sendOtp(phoneE164Format);
     await this.redis.set(`otp:${uuid}`, otp.request_id, 300);
 
-    res.cookie('registerSession', registerSession, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'local' ? false : true,
-      sameSite: "none",
-      maxAge: 60 * 1000,
-    });
+    res.cookie('registerSession', registerSession, this.cookieOpts(60 * 1000));
 
     return { message: "OTP resent successfully" };
   }
@@ -128,19 +129,8 @@ export class AuthController {
     const guestId = req?.user?.guestId;
     const tokens = await this.authService.login(dto, guestId);
 
-    res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'local' ? false : true,
-      sameSite: "none",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'local' ? false : true,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('accessToken', tokens.accessToken, this.cookieOpts(15 * 60 * 1000));
+    res.cookie('refreshToken', tokens.refreshToken, this.cookieOpts(7 * 24 * 60 * 60 * 1000));
 
     return { message: 'Login successful' };
   }
@@ -177,21 +167,8 @@ export class AuthController {
       tokens = await this.authService.refresh(data.id, refreshToken);
     }
 
-    const isSecure = process.env.NODE_ENV !== 'local';
-
-    res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: isSecure,
-      sameSite: "none",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: isSecure,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('accessToken', tokens.accessToken, this.cookieOpts(15 * 60 * 1000));
+    res.cookie('refreshToken', tokens.refreshToken, this.cookieOpts(7 * 24 * 60 * 60 * 1000));
 
     return { message: 'Refreshed' };
   }
@@ -234,12 +211,7 @@ export class AuthController {
       guestId,
     );
 
-    res.cookie('registerSession', newSession, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'local' ? false : true,
-      sameSite: "none",
-      maxAge: 60 * 1000,
-    });
+    res.cookie('registerSession', newSession, this.cookieOpts(60 * 1000));
 
     return { message: "OTP resent successfully" };
   }
@@ -266,19 +238,8 @@ export class AuthController {
 
     const tokens = await this.authService.initUserCompleteRegistration(registerSessionData.userId, registerSessionData.guestId);
 
-    res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'local' ? false : true,
-      sameSite: "none",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'local' ? false : true,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('accessToken', tokens.accessToken, this.cookieOpts(15 * 60 * 1000));
+    res.cookie('refreshToken', tokens.refreshToken, this.cookieOpts(7 * 24 * 60 * 60 * 1000));
 
     res.clearCookie('guestId');
     res.clearCookie('registerSession');

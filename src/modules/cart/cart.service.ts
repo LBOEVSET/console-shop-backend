@@ -50,7 +50,7 @@ export class CartService {
       existingCart.items.push({ productId, quantity, product });
     }
 
-    await this.redis.set(key, JSON.stringify(existingCart), 60 * 15);
+    await this.redis.set(key, JSON.stringify(existingCart), 60 * 60 * 24 * 7); // 7 days
 
     return existingCart;
   }
@@ -64,7 +64,7 @@ export class CartService {
         : item,
     );
 
-    await this.redis.set(this.getKey(userId, guestId), JSON.stringify(cart), 60 * 15);
+    await this.redis.set(this.getKey(userId, guestId), JSON.stringify(cart), 60 * 60 * 24 * 7); // 7 days
 
     return cart;
   }
@@ -76,7 +76,7 @@ export class CartService {
       (item: any) => item.productId !== productId,
     );
 
-    await this.redis.set(this.getKey(userId, guestId), JSON.stringify(cart), 60 * 15);
+    await this.redis.set(this.getKey(userId, guestId), JSON.stringify(cart), 60 * 60 * 24 * 7); // 7 days
 
     return cart;
   }
@@ -113,7 +113,7 @@ export class CartService {
     await this.redis.set(
       userKey,
       JSON.stringify(userCart),
-      60 * 15,
+      60 * 60 * 24 * 7, // 7 days
     );
 
     await this.redis.del(guestKey);
