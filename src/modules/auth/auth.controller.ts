@@ -95,6 +95,7 @@ export class AuthController {
   //   return { message: 'Registered successfully' };
   // }
 
+  @Public()
   @Post('register')
   @Throttle({ auth: { limit: 5, ttl: 60 } })
   async registerGuest(
@@ -119,6 +120,7 @@ export class AuthController {
     return { message: "OTP resent successfully" };
   }
 
+  @Public()
   @Post('login')
   @Throttle({ auth: { limit: 5, ttl: 60 } })
   async login(
@@ -127,6 +129,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const guestId = req?.user?.guestId;
+    console.log('ADMIN LOGIN');
+    console.log(dto);
     const tokens = await this.authService.login(dto, guestId);
 
     res.cookie('accessToken', tokens.accessToken, this.cookieOpts(15 * 60 * 1000));
