@@ -13,11 +13,23 @@ export class ProductsService {
 ) {}
 
   async findAllPlatforms() {
-    return this.prisma.platform.findMany({ orderBy: { name: 'asc' } });
+    const KEY = 'platforms:all';
+    const cached = await this.redis.get(KEY);
+    if (cached) return JSON.parse(cached);
+
+    const platforms = await this.prisma.platform.findMany({ orderBy: { name: 'asc' } });
+    await this.redis.set(KEY, JSON.stringify(platforms), 60 * 60); // 1 hour
+    return platforms;
   }
 
   async findAllCategories() {
-    return this.prisma.category.findMany({ orderBy: { name: 'asc' } });
+    const KEY = 'categories:all';
+    const cached = await this.redis.get(KEY);
+    if (cached) return JSON.parse(cached);
+
+    const categories = await this.prisma.category.findMany({ orderBy: { name: 'asc' } });
+    await this.redis.set(KEY, JSON.stringify(categories), 60 * 60); // 1 hour
+    return categories;
   }
 
   /**
@@ -46,11 +58,9 @@ export class ProductsService {
       data: dto,
     });
 
-    // Invalidate all product list cache entries (pattern delete)
+    // Invalidate product list cache entries
     const keys = await this.redis.getClient().keys('products:list:*');
-    if (keys.length) {
-      await this.redis.getClient().del(...keys);
-    }
+    if (keys.length) await this.redis.getClient().del(...keys);
 
     return product;
   }
