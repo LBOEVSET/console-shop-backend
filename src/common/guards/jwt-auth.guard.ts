@@ -27,7 +27,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     );
 
     if (isPublic) {
-      return true;
+      try {
+        return super.canActivate(context) as boolean | Promise<boolean>;
+      } catch {
+        return true;
+      }
     }
 
     return super.canActivate(context);
@@ -39,6 +43,16 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     _info: any,
     context: ExecutionContext,
   ) {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(
+      IS_PUBLIC_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    // Public routes: silently return whatever user was extracted (may be null)
+    if (isPublic) {
+      return user ?? null;
+    }
+
     const req = context.switchToHttp().getRequest();
     const requestId = req.requestId;
 

@@ -37,10 +37,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     this.logger.error(exception, ctx.getRequest<Request>().url);
 
     response.status(status).json({
-      success: false,
+      statusCode: status,
       message,
-      errors,
-      timestamp: new Date().toISOString(),
+      data: errors ?? null,
     });
   }
 }

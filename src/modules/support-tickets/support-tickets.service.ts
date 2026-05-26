@@ -65,10 +65,21 @@ export class SupportTicketsService {
     return this.prisma.supportTicket.findMany({
       where: { userId },
       include: {
-        messages: true,
+        messages: { orderBy: { createdAt: 'asc' } },
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async getMyTicketById(userId: string, ticketId: string) {
+    const ticket = await this.prisma.supportTicket.findFirst({
+      where: { id: ticketId, userId },
+      include: {
+        messages: { orderBy: { createdAt: 'asc' } },
+      },
+    });
+    if (!ticket) throw new NotFoundException('Ticket not found');
+    return ticket;
   }
 
   async getAllTickets() {

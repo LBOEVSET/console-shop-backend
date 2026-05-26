@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { LoggingInterceptor } from './core/logger/logging.interceptor';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import * as bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import { requestIdMiddleware } from './common/middleware/request-id.middleware';
@@ -15,6 +16,9 @@ async function bootstrap() {
       process.env.WEB_URL || 'https://localhost:3022',
       "http://localhost:3022",
       "https://localhost:3022",
+      // Admin panel
+      process.env.ADMIN_URL || "http://localhost:3030",
+      "http://localhost:3030",
     ],
     credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
@@ -38,7 +42,10 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix('api');
 
-  app.useGlobalInterceptors(app.get(LoggingInterceptor));
+  app.useGlobalInterceptors(
+    app.get(LoggingInterceptor),
+    new TransformInterceptor(),
+  );
 
   const requestContext = app.get(RequestContextService);
   app.use(requestIdMiddleware(requestContext));

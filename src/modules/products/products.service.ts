@@ -12,6 +12,14 @@ export class ProductsService {
     private redis: RedisService
 ) {}
 
+  async findAllPlatforms() {
+    return this.prisma.platform.findMany({ orderBy: { name: 'asc' } });
+  }
+
+  async findAllCategories() {
+    return this.prisma.category.findMany({ orderBy: { name: 'asc' } });
+  }
+
   /**
    * Build a deterministic cache key from all filter params so that
    * different queries never share the same cached result.
@@ -150,6 +158,25 @@ export class ProductsService {
     } catch (error) {
       throw new NotFoundException('Products not found');
     }
+  }
+
+  async update(id: string, dto: Partial<CreateProductDto>) {
+    const product = await this.prisma.product.findUnique({ where: { id } });
+    if (!product) throw new NotFoundException('Product not found');
+
+    const updated = await this.prisma.product.update({
+      where: { id },
+      data: dto,
+    });
+
+    // Bust single-item cache
+    await this.redis.getClient().del(`product:${id}`);
+
+    // Invalidate list cache
+    const keys = await this.redis.getClient().keys('products:list:*');
+    if (keys.length) await this.redis.getClient().del(...keys);
+
+    return updated;
   }
 
   async findOne(id: string) {

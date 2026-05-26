@@ -16,6 +16,16 @@ export class ReviewsService {
     });
   }
 
+  async findAll() {
+    return this.prisma.review.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, username: true, email: true } },
+        product: { select: { id: true, title: true } },
+      },
+    });
+  }
+
   async getApproved(productId: string) {
     return this.prisma.review.findMany({
       where: {

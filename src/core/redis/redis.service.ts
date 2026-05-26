@@ -53,7 +53,7 @@ export class RedisService
     this.baseLog.log('Redis disconnected');
   }
 
-  // 🔥 DO NOT CHANGE THIS (backward compatibility)
+  // (backward compatibility)
   getClient(): Redis {
     return this.client;
   }

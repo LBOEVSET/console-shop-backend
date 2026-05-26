@@ -26,6 +26,12 @@ export class ReviewsController {
     return this.reviewsService.create(req.user.id, dto);
   }
 
+  @Roles(UserRole.ADMIN)
+  @Get()
+  findAll() {
+    return this.reviewsService.findAll();
+  }
+
   @Get('product/:productId')
   getApproved(@Param('productId') productId: string) {
     return this.reviewsService.getApproved(productId);

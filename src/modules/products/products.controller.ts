@@ -4,6 +4,7 @@ import {
   Body,
   Get,
   Param,
+  Patch,
   Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
@@ -27,6 +28,18 @@ export class ProductsController {
   }
 
   @Public()
+  @Get('platforms')
+  findAllPlatforms() {
+    return this.productsService.findAllPlatforms();
+  }
+
+  @Public()
+  @Get('categories')
+  findAllCategories() {
+    return this.productsService.findAllCategories();
+  }
+
+  @Public()
   @Get()
   findAll(@Query() dto: FindProductDto) {
     return this.productsService.findAll(dto);
@@ -36,5 +49,11 @@ export class ProductsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: Partial<CreateProductDto>) {
+    return this.productsService.update(id, dto);
   }
 }

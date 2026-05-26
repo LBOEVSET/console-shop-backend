@@ -88,11 +88,7 @@ export class AuthService {
     return this.generateTokens(user)
   }
 
-  async registerGuest(dto: any, guestId: string) {
-    if (!guestId) {
-      throw new BadRequestException('Guest session not found');
-    }
-
+  async registerGuest(dto: any, guestId?: string) {
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -118,14 +114,16 @@ export class AuthService {
         }
       });
 
-      // 2️⃣ Migrate guest chat sessions
-      await tx.chatSession.updateMany({
-        where: { guestId },
-        data: {
-          customerId: user.id,
-          guestId: null,
-        },
-      });
+      // 2️⃣ Migrate guest chat sessions (only if we have a guestId)
+      if (guestId) {
+        await tx.chatSession.updateMany({
+          where: { guestId },
+          data: {
+            customerId: user.id,
+            guestId: null,
+          },
+        });
+      }
 
       // 3️⃣ Generate tokens
       const tokens = await this.generateTokens(user);

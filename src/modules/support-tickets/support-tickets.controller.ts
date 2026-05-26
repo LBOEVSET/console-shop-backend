@@ -14,7 +14,7 @@ import { CreateTicketDto } from './dto/create-ticket.dto';
 import { ReplyTicketDto } from './dto/reply-ticket.dto';
 
 @Controller({
-  path: 'support-tickets',
+  path: 'support',
   version: '1',
 })
 export class SupportTicketsController {
@@ -24,7 +24,7 @@ export class SupportTicketsController {
 
   // CUSTOMER — Create ticket
   @Roles(UserRole.CUSTOMER)
-  @Post()
+  @Post("create")
   create(@Req() req: any, @Body() dto: CreateTicketDto) {
     return this.supportTicketsService.createTicket(
       req.user.id,
@@ -35,11 +35,16 @@ export class SupportTicketsController {
 
   // CUSTOMER — View own tickets
   @Roles(UserRole.CUSTOMER)
-  @Get('my')
+  @Get('my-tickets')
   getMy(@Req() req: any) {
-    return this.supportTicketsService.getMyTickets(
-      req.user.id,
-    );
+    return this.supportTicketsService.getMyTickets(req.user.id);
+  }
+
+  // CUSTOMER — View single ticket (must own it)
+  @Roles(UserRole.CUSTOMER)
+  @Get('my-tickets/:id')
+  getMyOne(@Req() req: any, @Param('id') id: string) {
+    return this.supportTicketsService.getMyTicketById(req.user.id, id);
   }
 
   // ADMIN — View all tickets

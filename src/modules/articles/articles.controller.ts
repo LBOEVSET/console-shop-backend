@@ -1,5 +1,20 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Query,
+  Body,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ArticlesService } from './articles.service';
+import { CreateArticleDto } from './dto/create-article.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller({
   path: 'articles',
@@ -8,13 +23,50 @@ import { ArticlesService } from './articles.service';
 export class ArticlesController {
   constructor(private readonly service: ArticlesService) {}
 
+  /** Admin — list all (including unpublished), filterable by type */
+  @Roles(UserRole.ADMIN)
+  @Get('admin/all')
+  findAll(@Query('type') type?: string) {
+    return this.service.findAll(type);
+  }
+
+  /** Admin — get single article by id */
+  @Roles(UserRole.ADMIN)
+  @Get('admin/:id')
+  findOne(@Param('id') id: string) {
+    return this.service.findOne(id);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Post()
+  create(@Body() dto: CreateArticleDto) {
+    return this.service.create(dto);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: Partial<CreateArticleDto>) {
+    return this.service.update(id, dto);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string) {
+    return this.service.remove(id);
+  }
+
+  /** Public — feed (published only) */
+  @Public()
   @Get()
-  async feed(@Query('type') type?: string) {
+  feed(@Query('type') type?: string) {
     return this.service.feed(type);
   }
 
+  /** Public — article detail by slug */
+  @Public()
   @Get(':slug')
-  async detail(@Param('slug') slug: string) {
+  detail(@Param('slug') slug: string) {
     return this.service.detail(slug);
   }
 }
