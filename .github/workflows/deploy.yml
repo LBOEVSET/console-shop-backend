@@ -28,6 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: LBOEVSET/console-shop-backend-config
+          token: ${{ secrets.CONFIG_REPO_TOKEN }}
           path: _config
 
       - name: Copy ecosystem.config.js into build context
