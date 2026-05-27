@@ -21,8 +21,17 @@ jobs:
       id-token: write            # required for Workload Identity Federation
 
     steps:
-      - name: Checkout
+      - name: Checkout backend
         uses: actions/checkout@v4
+
+      - name: Checkout config repo (ecosystem.config.js)
+        uses: actions/checkout@v4
+        with:
+          repository: LBOEVSET/console-shop-backend-config
+          path: _config
+
+      - name: Copy ecosystem.config.js into build context
+        run: cp _config/ecosystem.config.js ./ecosystem.config.js
 
       - name: Authenticate to Google Cloud (WIF)
         uses: google-github-actions/auth@v2
