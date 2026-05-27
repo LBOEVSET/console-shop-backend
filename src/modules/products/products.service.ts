@@ -42,7 +42,7 @@ export class ProductsService {
       `l${dto.limit ?? 10}`,
       dto.searchWord ? `q:${dto.searchWord}` : '',
       dto.platformId ? `plat:${dto.platformId}` : '',
-      dto.categoryId ? `cat:${dto.categoryId}` : '',
+      dto.categoryIds?.length ? `cats:${[...dto.categoryIds].sort().join(',')}` : '',
       dto.inStock !== undefined ? `stock:${dto.inStock}` : '',
       dto.minPrice !== undefined ? `min:${dto.minPrice}` : '',
       dto.maxPrice !== undefined ? `max:${dto.maxPrice}` : '',
@@ -279,9 +279,14 @@ export class ProductsService {
       )
     }
 
-    if (dto.categoryId) {
+    if (dto.categoryIds && dto.categoryIds.length > 0) {
+      // EXISTS subquery — product must belong to at least one of the selected categories
       conditions.push(
-        Prisma.sql`pc."categoryId" = ${dto.categoryId}`
+        Prisma.sql`EXISTS (
+          SELECT 1 FROM "ProductCategory" pc
+          WHERE pc."productId" = p.id
+          AND pc."categoryId" = ANY(ARRAY[${Prisma.join(dto.categoryIds.map(id => Prisma.sql`${id}::uuid`))}])
+        )`
       )
     }
     
