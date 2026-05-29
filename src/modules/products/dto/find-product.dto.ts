@@ -5,8 +5,10 @@ import {
   IsBoolean,
   IsOptional,
   IsArray,
+  IsEnum,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
+import { ProductKind } from '@prisma/client';
 
 export class FindProductDto {
   @IsOptional()
@@ -52,4 +54,12 @@ export class FindProductDto {
   @IsArray()
   @IsUUID('all', { each: true })
   categoryIds?: string[];
+
+  @IsOptional()
+  @IsEnum(ProductKind)
+  category?: ProductKind;
+
+  @IsOptional()
+  @IsString()
+  type?: string;
 }

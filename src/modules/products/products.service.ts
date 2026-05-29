@@ -3,7 +3,8 @@ import { PrismaService } from '../../core/prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { RedisService } from '../../core/redis/redis.service';
 import { FindProductDto } from './dto/find-product.dto';
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client';
+
 
 @Injectable()
 export class ProductsService {
@@ -46,6 +47,8 @@ export class ProductsService {
       dto.inStock !== undefined ? `stock:${dto.inStock}` : '',
       dto.minPrice !== undefined ? `min:${dto.minPrice}` : '',
       dto.maxPrice !== undefined ? `max:${dto.maxPrice}` : '',
+      dto.category ? `kind:${dto.category}` : '',
+      dto.type ? `type:${dto.type}` : '',
     ]
       .filter(Boolean)
       .join('|');
@@ -95,6 +98,11 @@ export class ProductsService {
           p.description,
           p.stock,
           p."isActive",
+          p.category,
+          p.type,
+          p."seeCount",
+          p."viewCount",
+          p."clickCount",
           p."createdAt",
           p."updatedAt",
           p."platformId",
@@ -287,9 +295,21 @@ export class ProductsService {
           WHERE pc."productId" = p.id
           AND pc."categoryId" = ANY(ARRAY[${Prisma.join(dto.categoryIds.map(id => Prisma.sql`${id}::uuid`))}])
         )`
-      )
+      );
     }
-    
+
+    if (dto.category) {
+      conditions.push(
+        Prisma.sql`p.category = ${dto.category}::"ProductKind"`
+      );
+    }
+
+    if (dto.type) {
+      conditions.push(
+        Prisma.sql`p.type ILIKE ${'%' + dto.type + '%'}`
+      );
+    }
+
     return conditions;
   }
 }

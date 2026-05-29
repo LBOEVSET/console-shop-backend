@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient, DiscountType, UserRole } from "@prisma/client";
+import { PrismaClient, DiscountType, UserRole, ProductKind, MerchandiseType, StatEntityType, StatEventType } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcrypt";
 
@@ -492,6 +492,376 @@ async function main() {
       },
     }
   });
+
+  // =========================
+  // EVENTS
+  // =========================
+  const ev1 = await prisma.event.upsert({
+    where: { slug: "bangkok-gaming-expo-2026" },
+    update: {},
+    create: {
+      title:       "Bangkok Gaming Expo 2026",
+      slug:        "bangkok-gaming-expo-2026",
+      description: "Southeast Asia's biggest annual gaming convention. Try upcoming titles, meet developers, and compete in live tournaments.",
+      category:    ProductKind.GAME,
+      date:        new Date("2026-08-15T10:00:00Z"),
+      venue:       "BITEC, Bangkok",
+      price:       350,
+      stock:       2000,
+      isActive:    true,
+      seeCount:    142,
+      viewCount:   89,
+      clickCount:  34,
+      media: {
+        create: [
+          {
+            type:      "IMAGE",
+            url:       "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800",
+            sortOrder: 1,
+          },
+        ],
+      },
+    },
+  });
+
+  const ev2 = await prisma.event.upsert({
+    where: { slug: "esports-invitational-2026" },
+    update: {},
+    create: {
+      title:       "ArcadeZenter Esports Invitational 2026",
+      slug:        "esports-invitational-2026",
+      description: "Top-tier teams clash in Valorant, Street Fighter 6, and Tekken 8. Watch live or grab a seat in the arena.",
+      category:    ProductKind.TICKET,
+      date:        new Date("2026-09-05T14:00:00Z"),
+      venue:       "Impact Arena, Muang Thong Thani",
+      price:       500,
+      stock:       1200,
+      isActive:    true,
+      seeCount:    310,
+      viewCount:   201,
+      clickCount:  75,
+      media: {
+        create: [
+          {
+            type:      "IMAGE",
+            url:       "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=800",
+            sortOrder: 1,
+          },
+        ],
+      },
+    },
+  });
+
+  const ev3 = await prisma.event.upsert({
+    where: { slug: "indie-dev-showcase-oct-2026" },
+    update: {},
+    create: {
+      title:       "Indie Dev Showcase — October 2026",
+      slug:        "indie-dev-showcase-oct-2026",
+      description: "Discover the next big indie game. 30+ developers present demos, give talks, and hand out exclusive merch.",
+      category:    ProductKind.OTHER,
+      date:        new Date("2026-10-18T11:00:00Z"),
+      venue:       "CentralWorld Event Hall, Bangkok",
+      price:       0,
+      stock:       500,
+      isActive:    true,
+      seeCount:    88,
+      viewCount:   52,
+      clickCount:  17,
+      media: {
+        create: [
+          {
+            type:      "IMAGE",
+            url:       "https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?w=800",
+            sortOrder: 1,
+          },
+        ],
+      },
+    },
+  });
+  console.log("  ✓ events seeded");
+
+  // =========================
+  // MERCHANDISE
+  // =========================
+  await prisma.merchandise.upsert({
+    where: { slug: "az-logo-hoodie-black" },
+    update: {},
+    create: {
+      title:       "ArcadeZenter Logo Hoodie — Black",
+      slug:        "az-logo-hoodie-black",
+      description: "Premium heavyweight hoodie with embroidered AZ logo on the chest. Unisex fit. Available in S–XXL.",
+      type:        MerchandiseType.APPAREL,
+      price:       890,
+      stock:       150,
+      isActive:    true,
+      seeCount:    220,
+      viewCount:   140,
+      clickCount:  60,
+      media: {
+        create: [
+          {
+            type:      "IMAGE",
+            url:       "https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=600",
+            sortOrder: 1,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.merchandise.upsert({
+    where: { slug: "az-controller-stand-acrylic" },
+    update: {},
+    create: {
+      title:       "AZ Acrylic Controller Stand",
+      slug:        "az-controller-stand-acrylic",
+      description: "Crystal-clear acrylic stand that displays any PS5/Xbox/Switch controller. Laser-engraved AZ branding.",
+      type:        MerchandiseType.ACCESSORY,
+      price:       490,
+      stock:       80,
+      isActive:    true,
+      seeCount:    175,
+      viewCount:   98,
+      clickCount:  43,
+      media: {
+        create: [
+          {
+            type:      "IMAGE",
+            url:       "https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=600",
+            sortOrder: 1,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.merchandise.upsert({
+    where: { slug: "elden-ring-tarnished-figure" },
+    update: {},
+    create: {
+      title:       'Elden Ring "Tarnished" PVC Figure (20 cm)',
+      slug:        "elden-ring-tarnished-figure",
+      description: "Official licensed 20 cm PVC figure of the Tarnished knight. Highly detailed, display-ready with base.",
+      type:        MerchandiseType.COLLECTIBLE,
+      price:       1290,
+      stock:       40,
+      isActive:    true,
+      seeCount:    390,
+      viewCount:   260,
+      clickCount:  110,
+      media: {
+        create: [
+          {
+            type:      "IMAGE",
+            url:       "https://images.unsplash.com/photo-1608889825205-eebdb9fc5806?w=600",
+            sortOrder: 1,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.merchandise.upsert({
+    where: { slug: "az-gaming-headset-rgb" },
+    update: {},
+    create: {
+      title:       "AZ Pro Gaming Headset — RGB Edition",
+      slug:        "az-gaming-headset-rgb",
+      description: "7.1 surround-sound gaming headset with RGB ear cups and noise-cancelling mic. USB + 3.5 mm dual connection.",
+      type:        MerchandiseType.PERIPHERAL,
+      price:       2490,
+      stock:       60,
+      isActive:    true,
+      seeCount:    510,
+      viewCount:   320,
+      clickCount:  140,
+      media: {
+        create: [
+          {
+            type:      "IMAGE",
+            url:       "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600",
+            sortOrder: 1,
+          },
+        ],
+      },
+    },
+  });
+  console.log("  ✓ merchandise seeded");
+
+  // =========================
+  // SAMPLE STATISTICS
+  // =========================
+  // Fetch the entities we'll attach stats to
+  const [prodGoW, prodElden, merch1, merch4, article1] = await Promise.all([
+    prisma.product.findUnique({ where: { slug: "gow-ragnarok" } }),
+    prisma.product.findUnique({ where: { slug: "elden-ring" } }),
+    prisma.merchandise.findUnique({ where: { slug: "az-logo-hoodie-black" } }),
+    prisma.merchandise.findUnique({ where: { slug: "az-gaming-headset-rgb" } }),
+    prisma.article.findUnique({ where: { slug: "summer-sale-2026" } }),
+  ]);
+
+  // Helper: returns a Date N days ago + offset hours
+  const daysAgo = (d: number, h = 0) =>
+    new Date(Date.now() - d * 86_400_000 - h * 3_600_000);
+
+  // Pool of realistic IPs + geo
+  const geos = [
+    { ip: "101.51.1.1",   geo: { country: "Thailand",     city: "Bangkok",       regionName: "Bangkok",    status: "success" } },
+    { ip: "101.109.4.2",  geo: { country: "Thailand",     city: "Chiang Mai",    regionName: "Chiang Mai", status: "success" } },
+    { ip: "180.183.2.5",  geo: { country: "Thailand",     city: "Phuket",        regionName: "Phuket",     status: "success" } },
+    { ip: "8.8.8.8",      geo: { country: "United States", city: "Mountain View", regionName: "California", status: "success" } },
+    { ip: "104.16.0.1",   geo: { country: "United States", city: "San Francisco", regionName: "California", status: "success" } },
+    { ip: "202.12.27.1",  geo: { country: "Japan",        city: "Tokyo",         regionName: "Tokyo",      status: "success" } },
+    { ip: "118.27.4.1",   geo: { country: "Japan",        city: "Osaka",         regionName: "Osaka",      status: "success" } },
+    { ip: "14.1.32.1",    geo: { country: "Singapore",    city: "Singapore",     regionName: "Central",    status: "success" } },
+    { ip: "1.1.1.1",      geo: { country: "Australia",    city: "Sydney",        regionName: "New South Wales", status: "success" } },
+    { ip: "80.249.99.1",  geo: { country: "Germany",      city: "Frankfurt",     regionName: "Hesse",      status: "success" } },
+  ];
+
+  type StatRow = {
+    entityType:      StatEntityType;
+    entityId:        string;
+    eventType:       StatEventType;
+    ip:              string;
+    addressMetadata: object;
+    createdAt:       Date;
+  };
+
+  const rows: StatRow[] = [];
+
+  // ── Helper: push SEE → VIEW → (sometimes) CLICK for one visitor on one day
+  function visit(
+    entityType: StatEntityType,
+    entityId:   string,
+    daysBack:   number,
+    geoIdx:     number,
+    clicked = false,
+  ) {
+    const { ip, geo } = geos[geoIdx % geos.length];
+    const base = daysAgo(daysBack, Math.floor(Math.random() * 12));
+    rows.push({ entityType, entityId, eventType: StatEventType.SEE,  ip, addressMetadata: geo, createdAt: base });
+    rows.push({ entityType, entityId, eventType: StatEventType.VIEW, ip, addressMetadata: geo, createdAt: new Date(base.getTime() + 5_000) });
+    if (clicked) {
+      rows.push({ entityType, entityId, eventType: StatEventType.CLICK, ip, addressMetadata: geo, createdAt: new Date(base.getTime() + 8_000) });
+    }
+  }
+
+  // ── God of War Ragnarok (PRODUCT) — 30 days of traffic, trending up ──────
+  if (prodGoW) {
+    const id = prodGoW.id;
+    // Days 30 → 15: low baseline (2–4 visitors/day)
+    for (let d = 30; d >= 15; d--) {
+      visit(StatEntityType.PRODUCT, id, d, d % 10);
+      visit(StatEntityType.PRODUCT, id, d, (d + 3) % 10, d % 3 === 0);
+      if (d % 4 === 0) visit(StatEntityType.PRODUCT, id, d, (d + 7) % 10, false);
+    }
+    // Days 14 → 7: growing (4–7 visitors/day, sale promotion kicks in)
+    for (let d = 14; d >= 7; d--) {
+      for (let v = 0; v < 5; v++) visit(StatEntityType.PRODUCT, id, d, (d + v) % 10, v % 2 === 0);
+    }
+    // Days 6 → 0: viral spike (8–12 visitors/day)
+    for (let d = 6; d >= 0; d--) {
+      for (let v = 0; v < 9; v++) visit(StatEntityType.PRODUCT, id, d, (d + v * 2) % 10, v % 3 === 0);
+    }
+  }
+
+  // ── Elden Ring (PRODUCT) — steady high traffic with a mid-month dip ───────
+  if (prodElden) {
+    const id = prodElden.id;
+    for (let d = 30; d >= 0; d--) {
+      // Dip on days 20–15
+      const count = (d >= 15 && d <= 20) ? 3 : 7;
+      for (let v = 0; v < count; v++) {
+        visit(StatEntityType.PRODUCT, id, d, (d + v * 3) % 10, v % 4 === 0);
+      }
+    }
+  }
+
+  // ── Bangkok Gaming Expo (EVENT) — big spike when announced, then steady ───
+  if (ev1) {
+    const id = ev1.id;
+    // Days 30–25: announcement spike
+    for (let d = 30; d >= 25; d--) {
+      for (let v = 0; v < 14; v++) visit(StatEntityType.EVENT, id, d, (d + v) % 10, v % 2 === 0);
+    }
+    // Days 24–8: cooldown
+    for (let d = 24; d >= 8; d--) {
+      for (let v = 0; v < 5; v++) visit(StatEntityType.EVENT, id, d, (d + v * 2) % 10, v % 3 === 0);
+    }
+    // Days 7–0: reminder campaign picks up again
+    for (let d = 7; d >= 0; d--) {
+      for (let v = 0; v < 10; v++) visit(StatEntityType.EVENT, id, d, (d + v) % 10, v % 2 === 0);
+    }
+  }
+
+  // ── Esports Invitational (EVENT) — steady hype, rising as date approaches ──
+  if (ev2) {
+    const id = ev2.id;
+    // Days 30–22: initial ticket-sale buzz
+    for (let d = 30; d >= 22; d--) {
+      for (let v = 0; v < 8; v++) visit(StatEntityType.EVENT, id, d, (d + v * 3) % 10, v % 2 === 0);
+    }
+    // Days 21–8: steady interest
+    for (let d = 21; d >= 8; d--) {
+      for (let v = 0; v < 6; v++) visit(StatEntityType.EVENT, id, d, (d + v * 2) % 10, v % 3 === 0);
+    }
+    // Days 7–0: final push — sold-out fear kicks in
+    for (let d = 7; d >= 0; d--) {
+      for (let v = 0; v < 14; v++) visit(StatEntityType.EVENT, id, d, (d + v) % 10, v % 2 === 0);
+    }
+  }
+
+  // ── Indie Dev Showcase (EVENT) — free event, organic/niche steady build ────
+  if (ev3) {
+    const id = ev3.id;
+    // Days 30–15: slow organic discovery
+    for (let d = 30; d >= 15; d--) {
+      const count = d % 3 === 0 ? 5 : 3;
+      for (let v = 0; v < count; v++) visit(StatEntityType.EVENT, id, d, (d + v * 4) % 10, v % 4 === 0);
+    }
+    // Days 14–0: indie community shares start picking it up
+    for (let d = 14; d >= 0; d--) {
+      for (let v = 0; v < 7; v++) visit(StatEntityType.EVENT, id, d, (d + v * 2) % 10, v % 3 === 0);
+    }
+  }
+
+  // ── AZ Logo Hoodie (MERCHANDISE) — weekend spikes ─────────────────────────
+  if (merch1) {
+    const id = merch1.id;
+    for (let d = 30; d >= 0; d--) {
+      // Every 7th day = big weekend spike
+      const count = d % 7 === 0 ? 12 : d % 7 === 1 ? 8 : 3;
+      for (let v = 0; v < count; v++) visit(StatEntityType.MERCHANDISE, id, d, (d + v * 4) % 10, v % 3 === 0);
+    }
+  }
+
+  // ── AZ Gaming Headset (MERCHANDISE) — slow burn, accelerating ────────────
+  if (merch4) {
+    const id = merch4.id;
+    for (let d = 30; d >= 0; d--) {
+      const count = Math.max(1, Math.round((30 - d) / 4));
+      for (let v = 0; v < count; v++) visit(StatEntityType.MERCHANDISE, id, d, (d + v * 3) % 10, v % 5 === 0);
+    }
+  }
+
+  // ── Summer Sale Article (ARTICLE) — big on publish day then fades ─────────
+  if (article1) {
+    const id = article1.id;
+    // "Published" 28 days ago — huge spike
+    for (let v = 0; v < 20; v++) visit(StatEntityType.ARTICLE, id, 28, v % 10, v % 2 === 0);
+    for (let v = 0; v < 12; v++) visit(StatEntityType.ARTICLE, id, 27, v % 10, v % 3 === 0);
+    // Then exponential decay
+    const decay = [8, 6, 5, 4, 4, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+    decay.forEach((count, i) => {
+      for (let v = 0; v < count; v++) visit(StatEntityType.ARTICLE, id, 26 - i, v % 10, v % 4 === 0);
+    });
+  }
+
+  // Write all rows (createMany is much faster than looped create)
+  await prisma.statistic.createMany({ data: rows });
+  console.log(`  ✓ statistics seeded (${rows.length} rows across 8 entities)`);
+
 
   // =========================
   // PROMO CODES

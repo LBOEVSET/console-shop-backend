@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   UnauthorizedException,
   Controller,
+  Get,
   Post,
   Body,
   Req,
@@ -175,6 +176,20 @@ export class AuthController {
     res.cookie('refreshToken', tokens.refreshToken, this.cookieOpts(7 * 24 * 60 * 60 * 1000));
 
     return { message: 'Refreshed' };
+  }
+
+  /**
+   * Returns the caller's raw accessToken so the browser can pass it as
+   * socket.io handshake auth.  Needed because the token lives in an
+   * httpOnly cookie on the Next.js proxy origin (localhost:3022) and
+   * cannot be read by JS or sent cross-origin to the WS server (localhost:3012).
+   * This endpoint is guarded by JwtAuthGuard — only a valid session gets a token.
+   */
+  @Get('ws-token')
+  wsToken(@Req() req: Request & { cookies: Record<string, string> }) {
+    const token = req.cookies?.accessToken;
+    if (!token) throw new UnauthorizedException('No session cookie');
+    return { token };
   }
 
   @Post('logout')

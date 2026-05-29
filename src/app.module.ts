@@ -22,6 +22,10 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { PaymentsModule } from './modules/payments/payments.module';
 import { ArticlesModule } from './modules/articles/articles.module';
 import { HealthCheckModule } from './modules/health-check/health-check.module';
+import { StatisticsModule } from './modules/statistics/statistics.module';
+import { EventsModule } from './modules/events/events.module';
+import { MerchandiseModule } from './modules/merchandise/merchandise.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -38,6 +42,10 @@ import { HealthCheckModule } from './modules/health-check/health-check.module';
     ProfileModule,
     PaymentsModule,
     ArticlesModule,
+    StatisticsModule,
+    EventsModule,
+    MerchandiseModule,
+    ChatModule,
     LoggerModule,
     JwtModule.registerAsync({
       inject: [ConfigService],

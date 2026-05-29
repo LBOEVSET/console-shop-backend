@@ -4,7 +4,10 @@ import {
   IsInt,
   Min,
   IsUUID,
+  IsEnum,
+  IsOptional,
 } from 'class-validator';
+import { ProductKind } from '@prisma/client';
 
 export class CreateProductDto {
   @IsString()
@@ -31,4 +34,12 @@ export class CreateProductDto {
 
   @IsUUID()
   categoryId!: string;
+
+  @IsOptional()
+  @IsEnum(ProductKind)
+  category?: ProductKind;
+
+  @IsOptional()
+  @IsString()
+  type?: string;
 }

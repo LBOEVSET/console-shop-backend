@@ -45,6 +45,28 @@ export class ChatService {
     return session;
   }
 
+  async getSessions(status?: ChatStatus) {
+    return this.prisma.chatSession.findMany({
+      where: status ? { status } : undefined,
+      orderBy: { startedAt: 'desc' },
+      include: {
+        customer: { select: { id: true, firstName: true, lastName: true, email: true } },
+        messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+    });
+  }
+
+  async getMessages(sessionId: string) {
+    return this.prisma.chatMessage.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async getWaitingCount(): Promise<number> {
+    return this.prisma.chatSession.count({ where: { status: ChatStatus.WAITING } });
+  }
+
   async saveMessage(
     sessionId: string,
     sender: string,
