@@ -12,31 +12,31 @@ import { Type } from 'class-transformer';
 
 export class CreateEventMediaDto {
   @IsString()
-  type: string;
+  type!: string;
 
   @IsString()
-  url: string;
+  url!: string;
 
   @IsNumber()
-  sortOrder: number;
+  sortOrder!: number;
 }
 
 export class CreateEventDto {
   @IsString()
-  title: string;
+  title!: string;
 
   @IsString()
-  slug: string;
+  slug!: string;
 
   @IsString()
-  description: string;
+  description!: string;
 
   @IsEnum(ProductKind)
   @IsOptional()
   category?: ProductKind;
 
   @IsDateString()
-  date: string;
+  date!: string;
 
   @IsOptional()
   @IsString()

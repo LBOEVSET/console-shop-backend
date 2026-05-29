@@ -3,13 +3,13 @@ import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class CreateStatisticDto {
   @IsEnum(StatEntityType)
-  entityType: StatEntityType;
+  entityType!: StatEntityType;
 
   @IsString()
-  entityId: string;
+  entityId!: string;
 
   @IsEnum(StatEventType)
-  eventType: StatEventType;
+  eventType!: StatEventType;
 
   @IsOptional()
   @IsString()
