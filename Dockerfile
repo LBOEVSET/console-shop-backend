@@ -27,7 +27,6 @@ RUN npm install -g pm2
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/ecosystem.config.js ./ecosystem.config.js
 
@@ -38,4 +37,4 @@ EXPOSE 3012
 
 # Run pending Prisma migrations then start the API with PM2.
 # DATABASE_URL must be set via k8s secret / env before this runs.
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && pm2-runtime start ecosystem.config.js --only api"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --schema=prisma/schema.prisma && pm2-runtime start ecosystem.config.js --only api"]
