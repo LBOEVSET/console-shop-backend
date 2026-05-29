@@ -79,7 +79,7 @@ jobs:
             name: prisma-migrate
             namespace: ${{ env.NS }}
           spec:
-            ttlSecondsAfterFinished: 300
+            ttlSecondsAfterFinished: 3600
             backoffLimit: 2
             template:
               spec:
