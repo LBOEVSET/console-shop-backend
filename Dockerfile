@@ -10,6 +10,7 @@ RUN npm install
 
 COPY . .
 
+# Generate Prisma client + download engines for linux-musl (alpine)
 RUN npx prisma generate
 RUN npm run build
 
@@ -36,5 +37,5 @@ RUN mkdir -p logs
 EXPOSE 3012
 
 # Run pending Prisma migrations then start the API with PM2.
-# DATABASE_URL must be set via k8s secret / env before this runs.
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --url $DATABASE_URL && pm2-runtime start ecosystem.config.js --only api"]
+# DATABASE_URL is injected via k8s secret at runtime.
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && pm2-runtime start ecosystem.config.js --only api"]
