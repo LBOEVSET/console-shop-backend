@@ -64,6 +64,10 @@ jobs:
           location:     ${{ secrets.GKE_ZONE }}
           project_id:   ${{ secrets.GCP_PROJECT_ID }}
 
+      - name: Run database migrations
+        run: |
+          kubectl exec -n ${{ env.NS }} deployment/${{ env.DEPLOY }} -- npx prisma migrate deploy
+
       - name: Rollout restart
         run: |
           kubectl rollout restart deployment/${{ env.DEPLOY }} -n ${{ env.NS }}

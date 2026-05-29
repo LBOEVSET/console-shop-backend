@@ -13,7 +13,7 @@ import { CartModule } from './modules/cart/cart.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { SupportTicketsModule } from './modules/support-tickets/support-tickets.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 import { THROTTLE_CONFIG } from './core/throttler.config';
 import { ProfileModule } from './modules/profile/profile.module';
