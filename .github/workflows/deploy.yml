@@ -87,7 +87,7 @@ jobs:
                 containers:
                   - name: migrate
                     image: ${IMAGE_PATH}
-                    command: ["sh", "-c", "npx prisma migrate deploy"]
+                    command: ["sh", "-c", "npx prisma migrate deploy --url $DATABASE_URL"]
                     envFrom:
                       - secretRef:
                           name: backend-secret

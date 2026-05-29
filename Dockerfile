@@ -37,4 +37,4 @@ EXPOSE 3012
 
 # Run pending Prisma migrations then start the API with PM2.
 # DATABASE_URL must be set via k8s secret / env before this runs.
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && pm2-runtime start ecosystem.config.js --only api"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy --url $DATABASE_URL && pm2-runtime start ecosystem.config.js --only api"]
