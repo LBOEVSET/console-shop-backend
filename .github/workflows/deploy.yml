@@ -67,11 +67,34 @@ jobs:
       - name: Run database migrations
         run: |
           IMAGE_PATH="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE }}:${{ github.sha }}"
+
           # Delete any previous migration job
           kubectl delete job prisma-migrate -n ${{ env.NS }} --ignore-not-found
 
-          # Apply the job with the new image
-          sed "s|IMAGE_TAG|${IMAGE_PATH}|g" _config/k8s/migrate-job.yaml | kubectl apply -f -
+          # Apply migration job inline
+          kubectl apply -f - <<EOF
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: prisma-migrate
+            namespace: ${{ env.NS }}
+          spec:
+            ttlSecondsAfterFinished: 300
+            backoffLimit: 2
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: migrate
+                    image: ${IMAGE_PATH}
+                    command: ["sh", "-c", "npx prisma migrate deploy --schema=prisma/schema.prisma"]
+                    envFrom:
+                      - secretRef:
+                          name: backend-secret
+                    env:
+                      - name: NODE_ENV
+                        value: "production"
+          EOF
 
           # Wait for it to complete (timeout 2 min)
           kubectl wait job/prisma-migrate -n ${{ env.NS }} --for=condition=complete --timeout=120s

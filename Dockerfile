@@ -12,6 +12,8 @@ COPY . .
 
 RUN npx prisma generate
 RUN npm run build
+# Compile prisma.config.ts to JS so Prisma CLI can load it at runtime without ts-node
+RUN npx tsc prisma.config.ts --module commonjs --target es2020 --esModuleInterop --outDir .
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Stage 2 — Production runner
@@ -27,6 +29,7 @@ RUN npm install -g pm2
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.js ./prisma.config.js
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/ecosystem.config.js ./ecosystem.config.js
 
