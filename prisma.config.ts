@@ -2,7 +2,7 @@ import { defineConfig } from "prisma/config";
 
 export default defineConfig({
   migrations: {
-    seed: "ts-node --compiler-options '{\"module\":\"commonjs\"}' prisma/seed.ts",
+    seed: "ts-node --project tsconfig.json prisma/seed.ts",
   },
 
   datasource: {
