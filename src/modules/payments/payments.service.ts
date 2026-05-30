@@ -115,12 +115,17 @@ export class PaymentsService {
         });
 
         for (const item of items) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: {
-              stock: { increment: item.quantity },
-            },
-          });
+          if (item.productId) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { stock: { increment: item.quantity } },
+            });
+          } else if (item.eventId) {
+            await tx.event.update({
+              where: { id: item.eventId },
+              data: { stock: { increment: item.quantity } },
+            });
+          }
         }
       }
     });
