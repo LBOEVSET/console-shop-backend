@@ -12,6 +12,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 import { OrdersService } from './orders.service';
 import { CheckoutDto } from './dto/checkout.dto';
+import { EventCheckoutDto } from './dto/event-checkout.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
 @Controller({
@@ -26,6 +27,12 @@ export class OrdersController {
   @Post('checkout')
   checkout(@Req() req: any, @Body() dto: CheckoutDto) {
     return this.ordersService.checkout(req.user.id, dto);
+  }
+
+  @Roles(UserRole.CUSTOMER)
+  @Post('event-checkout')
+  eventCheckout(@Req() req: any, @Body() dto: EventCheckoutDto) {
+    return this.ordersService.eventCheckout(req.user.id, dto);
   }
 
   @Roles(UserRole.CUSTOMER)

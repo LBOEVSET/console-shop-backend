@@ -5,6 +5,7 @@ import {
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { RedisService } from '../../core/redis/redis.service';
 import { CheckoutDto } from './dto/checkout.dto';
+import { EventCheckoutDto } from './dto/event-checkout.dto';
 import { Prisma, OrderStatus, PaymentStatus } from '@prisma/client';
 import { OrderStateTransitions } from './enums/order-state.machine';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -138,6 +139,67 @@ export class OrdersService {
     return {
       orderId: order.id,
     };
+  }
+
+  async eventCheckout(userId: string, dto: EventCheckoutDto) {
+    const event = await this.prisma.event.findUnique({ where: { id: dto.eventId } });
+    if (!event || !event.isActive) throw new NotFoundException('Event not found');
+    if (event.stock < dto.quantity) throw new BadRequestException('Not enough tickets available');
+
+    const total = new Prisma.Decimal(event.price).mul(dto.quantity);
+    const orderNumber = `TKT-${Date.now()}`;
+
+    const order = await this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.create({
+        data: {
+          orderNumber,
+          userId,
+          subtotal: total,
+          discount: 0,
+          total,
+          paymentMethod: dto.paymentMethod,
+          status: OrderStatus.PENDING_PAYMENT,
+        },
+      });
+
+      await tx.orderItem.create({
+        data: {
+          orderId: order.id,
+          eventId: event.id,
+          title: `${event.title} (Ticket)`,
+          price: event.price,
+          quantity: dto.quantity,
+        },
+      });
+
+      await tx.event.update({
+        where: { id: event.id },
+        data: { stock: { decrement: dto.quantity } },
+      });
+
+      await tx.payment.create({
+        data: {
+          orderId: order.id,
+          provider: 'OMISE',
+          status: PaymentStatus.PENDING,
+          amount: total,
+          currency: 'THB',
+        },
+      });
+
+      return order;
+    });
+
+    if (dto.paymentMethod === 'PROMPTPAY') {
+      const charge = await this.omiseService.createPromptPayCharge(Number(total), order.id);
+      await this.prisma.payment.update({
+        where: { orderId: order.id },
+        data: { chargeId: charge.id, rawPayload: charge },
+      });
+      return { orderId: order.id, qrCode: charge.source?.scannable_code?.image?.download_uri };
+    }
+
+    return { orderId: order.id };
   }
 
   async updateOrderStatus(
