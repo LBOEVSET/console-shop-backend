@@ -25,41 +25,25 @@ export class LoggingInterceptor implements NestInterceptor {
 
     const requestId = req.requestId;
 
-    // 🔹 INBOUND
-    this.logger.logInbound({
-      requestId,
-      method: req.method,
-      url: req.url,
-      headers: req.headers,
-      query: req.query,
-      params: req.params,
-      body: req.body,
-    });
+    // Inbound logging disabled — too noisy
+    // this.logger.logInbound({ requestId, method: req.method, url: req.url, ... });
 
     return next.handle().pipe(
-      tap((responseBody) => {
-        const duration = Date.now() - start;
-
-        this.logger.logOutbound({
-          requestId,
-          method: req.method,
-          url: req.url,
-          statusCode: res.statusCode,
-          durationMs: duration,
-          response: responseBody,
-        });
+      // Success responses: only log non-200 for visibility
+      tap((_responseBody) => {
+        // Disabled: this.logger.logOutbound(...)
       }),
 
       catchError((error) => {
         const duration = Date.now() - start;
 
+        // Always log errors so they're visible in pm2 logs
         this.logger.logOutbound({
           requestId,
+          url: req.url,
           statusCode: error?.status || 500,
           durationMs: duration,
-          response: {
-            message: error?.message,
-          },
+          response: { message: error?.message },
           error: error?.stack,
         });
 
