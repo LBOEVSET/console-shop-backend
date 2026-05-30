@@ -266,7 +266,7 @@ export class ProductsService {
 
     if (dto.platformId) {
       conditions.push(
-        Prisma.sql`p."platformId" = ${dto.platformId}`
+        Prisma.sql`p."platformId"::text = ${dto.platformId}`
       )
     }
 
@@ -295,8 +295,8 @@ export class ProductsService {
       conditions.push(
         Prisma.sql`EXISTS (
           SELECT 1 FROM "ProductCategory" pc
-          WHERE pc."productId" = p.id
-          AND pc."categoryId" = ANY(ARRAY[${Prisma.join(dto.categoryIds.map(id => Prisma.sql`${id}::uuid`))}])
+          WHERE pc."productId"::text = p.id::text
+          AND pc."categoryId"::text = ANY(ARRAY[${Prisma.join(dto.categoryIds.map(id => Prisma.sql`${id}`))}])
         )`
       );
     }
