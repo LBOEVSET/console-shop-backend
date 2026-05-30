@@ -174,7 +174,10 @@ export class ProductsService {
 
       return result;
     } catch (error) {
-      throw new NotFoundException('Products not found');
+      // Re-throw known NestJS exceptions as-is
+      if (error instanceof NotFoundException) throw error;
+      // Log and rethrow unexpected errors rather than masking them as 404
+      throw error;
     }
   }
 
