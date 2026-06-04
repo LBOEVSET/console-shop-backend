@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -28,8 +29,11 @@ export class ReviewsController {
 
   @Roles(UserRole.ADMIN)
   @Get()
-  findAll() {
-    return this.reviewsService.findAll();
+  findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.reviewsService.findAll(Number(page ?? 1), Number(limit ?? 20));
   }
 
   @Get('product/:productId')

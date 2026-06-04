@@ -23,11 +23,15 @@ import { Public } from '../../common/decorators/public.decorator';
 export class ArticlesController {
   constructor(private readonly service: ArticlesService) {}
 
-  /** Admin — list all (including unpublished), filterable by type */
+  /** Admin — list all (including unpublished), filterable by type, paginated */
   @Roles(UserRole.ADMIN)
   @Get('admin/all')
-  findAll(@Query('type') type?: string) {
-    return this.service.findAll(type);
+  findAll(
+    @Query('type') type?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.findAll(type, Number(page ?? 1), Number(limit ?? 20));
   }
 
   /** Admin — get single article by id */
@@ -56,11 +60,15 @@ export class ArticlesController {
     return this.service.remove(id);
   }
 
-  /** Public — feed (published only) */
+  /** Public — feed (published only), paginated */
   @Public()
   @Get()
-  feed(@Query('type') type?: string) {
-    return this.service.feed(type);
+  feed(
+    @Query('type') type?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.feed(type, Number(page ?? 1), Number(limit ?? 12));
   }
 
   /** Public — article detail by slug */

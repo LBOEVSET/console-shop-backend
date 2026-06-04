@@ -24,15 +24,25 @@ export class EventsService {
 
   // ── Admin ─────────────────────────────────────────────────────────────────
 
-  async findAll(filters?: { category?: ProductKind; isActive?: boolean }) {
-    return this.prisma.event.findMany({
-      where: {
-        ...(filters?.category  !== undefined ? { category: filters.category }   : {}),
-        ...(filters?.isActive  !== undefined ? { isActive: filters.isActive }   : {}),
-      },
-      include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
-      orderBy: { date: 'asc' },
-    });
+  async findAll(filters?: { category?: ProductKind; isActive?: boolean; page?: number; limit?: number }) {
+    const page  = filters?.page  ?? 1;
+    const limit = filters?.limit ?? 20;
+    const skip  = (page - 1) * limit;
+    const where = {
+      ...(filters?.category !== undefined ? { category: filters.category } : {}),
+      ...(filters?.isActive !== undefined ? { isActive: filters.isActive } : {}),
+    };
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.event.findMany({
+        where,
+        include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+        orderBy: { date: 'asc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async findOne(id: string) {
@@ -93,18 +103,29 @@ export class EventsService {
 
   // ── Public (cached) ───────────────────────────────────────────────────────
 
-  async publicList() {
-    const cached = await this.redis.get(this.listKey());
-    if (cached) return JSON.parse(cached);
+  async publicList(page = 1, limit = 12) {
+    const skip  = (page - 1) * limit;
+    const where = { isActive: true };
 
-    const events = await this.prisma.event.findMany({
-      where:   { isActive: true },
-      include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
-      orderBy: { date: 'asc' },
-    });
+    if (page === 1) {
+      const cached = await this.redis.get(this.listKey());
+      if (cached) return JSON.parse(cached);
+    }
 
-    await this.redis.set(this.listKey(), JSON.stringify(events), LIST_TTL);
-    return events;
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.event.findMany({
+        where,
+        include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+        orderBy: { date: 'asc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.event.count({ where }),
+    ]);
+    const result = { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+
+    if (page === 1) await this.redis.set(this.listKey(), JSON.stringify(result), LIST_TTL);
+    return result;
   }
 
   async publicDetail(slug: string) {

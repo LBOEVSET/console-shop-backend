@@ -229,44 +229,55 @@ export class OrdersService {
     });
   }
 
-  async getMyOrders(userId: string) {
-    const orders = await this.prisma.order.findMany({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                media: {
-                  where: { type: 'IMAGE' },
-                  orderBy: { sortOrder: 'asc' },
-                  take: 1,
+  async getMyOrders(userId: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const where = { userId };
+    const [orders, total] = await this.prisma.$transaction([
+      this.prisma.order.findMany({
+        where,
+        include: {
+          items: {
+            include: {
+              product: {
+                include: {
+                  media: {
+                    where: { type: 'IMAGE' },
+                    orderBy: { sortOrder: 'asc' },
+                    take: 1,
+                  },
                 },
               },
             },
           },
+          payment: true,
         },
-        payment: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.order.count({ where }),
+    ]);
 
-    return orders.map(order => ({
+    const data = orders.map(order => ({
       ...order,
       item: order.items[0] ?? null,
       items: undefined,
     }));
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  async getAllOrders() {
-    return this.prisma.order.findMany({
-      include: {
-        user: true,
-        items: true,
-        payment: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async getAllOrders(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.order.findMany({
+        include: { user: true, items: true, payment: true },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.order.count(),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async getOrderById(orderId: string, userId: string) {

@@ -32,15 +32,21 @@ export class ArticlesService {
 
   // ── Admin routes (no cache — admins need live data) ──────────────────────
 
-  /** Admin — all articles including unpublished */
-  async findAll(type?: string) {
-    return this.prisma.article.findMany({
-      where: type ? { type: type as ArticleType } : {},
-      include: {
-        media: { orderBy: { sortOrder: 'asc' }, take: 1 },
-      },
-      orderBy: [{ type: 'asc' }, { publishedAt: 'desc' }],
-    });
+  /** Admin — all articles including unpublished, paginated */
+  async findAll(type?: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const where = type ? { type: type as ArticleType } : {};
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.article.findMany({
+        where,
+        include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+        orderBy: [{ type: 'asc' }, { publishedAt: 'desc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.article.count({ where }),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   /** Admin — single article by id */
@@ -83,24 +89,42 @@ export class ArticlesService {
 
   // ── Public routes (cached) ────────────────────────────────────────────────
 
-  async feed(type?: string) {
-    const key = this.feedKey(type);
-    const cached = await this.redis.get(key);
-    if (cached) return JSON.parse(cached);
+  async feed(type?: string, page = 1, limit = 12) {
+    const skip = (page - 1) * limit;
+    const where = { isPublished: true, ...(type ? { type: type as ArticleType } : {}) };
 
-    const articles = await this.prisma.article.findMany({
-      where: {
-        isPublished: true,
-        ...(type ? { type: type as ArticleType } : {}),
-      },
-      include: {
-        media: { orderBy: { sortOrder: 'asc' }, take: 1 },
-      },
-      orderBy: [{ type: 'asc' }, { publishedAt: 'desc' }],
-    });
+    // Cache only first page with no filter
+    if (page === 1 && !type) {
+      const key = this.feedKey(type);
+      const cached = await this.redis.get(key);
+      if (cached) return JSON.parse(cached);
 
-    await this.redis.set(key, JSON.stringify(articles), FEED_TTL);
-    return articles;
+      const [data, total] = await this.prisma.$transaction([
+        this.prisma.article.findMany({
+          where,
+          include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+          orderBy: [{ type: 'asc' }, { publishedAt: 'desc' }],
+          skip,
+          take: limit,
+        }),
+        this.prisma.article.count({ where }),
+      ]);
+      const result = { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+      await this.redis.set(key, JSON.stringify(result), FEED_TTL);
+      return result;
+    }
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.article.findMany({
+        where,
+        include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+        orderBy: [{ type: 'asc' }, { publishedAt: 'desc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.article.count({ where }),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async detail(slug: string) {

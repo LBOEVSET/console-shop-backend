@@ -27,10 +27,14 @@ export class EventsController {
   findAll(
     @Query('category') category?: ProductKind,
     @Query('isActive') isActive?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     return this.service.findAll({
       category,
       isActive: isActive !== undefined ? isActive === 'true' : undefined,
+      page: Number(page ?? 1),
+      limit: Number(limit ?? 20),
     });
   }
 
@@ -63,8 +67,11 @@ export class EventsController {
 
   @Public()
   @Get()
-  publicList() {
-    return this.service.publicList();
+  publicList(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.publicList(Number(page ?? 1), Number(limit ?? 12));
   }
 
   @Public()

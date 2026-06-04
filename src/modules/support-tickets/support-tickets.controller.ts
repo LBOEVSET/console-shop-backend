@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Req,
+  Query,
 } from '@nestjs/common';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole, TicketStatus } from '@prisma/client';
@@ -36,8 +37,12 @@ export class SupportTicketsController {
   // CUSTOMER — View own tickets
   @Roles(UserRole.CUSTOMER)
   @Get('my-tickets')
-  getMy(@Req() req: any) {
-    return this.supportTicketsService.getMyTickets(req.user.id);
+  getMy(
+    @Req() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.supportTicketsService.getMyTickets(req.user.id, Number(page ?? 1), Number(limit ?? 10));
   }
 
   // CUSTOMER — View single ticket (must own it)
@@ -50,8 +55,11 @@ export class SupportTicketsController {
   // ADMIN — View all tickets
   @Roles(UserRole.ADMIN)
   @Get()
-  getAll() {
-    return this.supportTicketsService.getAllTickets();
+  getAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.supportTicketsService.getAllTickets(Number(page ?? 1), Number(limit ?? 20));
   }
 
   // Reply (both roles allowed)

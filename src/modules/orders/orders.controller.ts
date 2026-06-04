@@ -6,6 +6,7 @@ import {
   Get,
   Param,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -37,15 +38,22 @@ export class OrdersController {
 
   @Roles(UserRole.CUSTOMER)
   @Get('my')
-  getMyOrders(@Req() req: any) {
-    return this.ordersService.getMyOrders(req.user.id);
+  getMyOrders(
+    @Req() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.ordersService.getMyOrders(req.user.id, Number(page ?? 1), Number(limit ?? 10));
   }
 
   // ADMIN
   @Roles(UserRole.ADMIN)
   @Get()
-  getAllOrders() {
-    return this.ordersService.getAllOrders();
+  getAllOrders(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.ordersService.getAllOrders(Number(page ?? 1), Number(limit ?? 20));
   }
 
   @Get(':id')

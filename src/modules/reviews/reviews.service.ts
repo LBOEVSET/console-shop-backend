@@ -32,15 +32,22 @@ export class ReviewsService {
     return review;
   }
 
-  /** Admin — list all reviews (not cached, admin needs live data) */
-  async findAll() {
-    return this.prisma.review.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: { select: { id: true, username: true, email: true } },
-        product: { select: { id: true, title: true } },
-      },
-    });
+  /** Admin — list all reviews, paginated */
+  async findAll(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.review.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { id: true, username: true, email: true } },
+          product: { select: { id: true, title: true } },
+        },
+        skip,
+        take: limit,
+      }),
+      this.prisma.review.count(),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   /** Public — approved reviews for a product page (cached) */

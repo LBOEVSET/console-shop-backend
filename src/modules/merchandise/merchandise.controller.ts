@@ -27,10 +27,14 @@ export class MerchandiseController {
   findAll(
     @Query('type')     type?:     MerchandiseType,
     @Query('isActive') isActive?: string,
+    @Query('page')     page?:     string,
+    @Query('limit')    limit?:    string,
   ) {
     return this.service.findAll({
       type,
       isActive: isActive !== undefined ? isActive === 'true' : undefined,
+      page: Number(page ?? 1),
+      limit: Number(limit ?? 20),
     });
   }
 
@@ -63,8 +67,12 @@ export class MerchandiseController {
 
   @Public()
   @Get()
-  publicList(@Query('type') type?: MerchandiseType) {
-    return this.service.publicList(type);
+  publicList(
+    @Query('type')  type?:  MerchandiseType,
+    @Query('page')  page?:  string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.service.publicList(type, Number(page ?? 1), Number(limit ?? 12));
   }
 
   @Public()

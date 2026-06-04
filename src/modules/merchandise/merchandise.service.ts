@@ -24,15 +24,25 @@ export class MerchandiseService {
 
   // ── Admin ─────────────────────────────────────────────────────────────────
 
-  async findAll(filters?: { type?: MerchandiseType; isActive?: boolean }) {
-    return this.prisma.merchandise.findMany({
-      where: {
-        ...(filters?.type     !== undefined ? { type:     filters.type }     : {}),
-        ...(filters?.isActive !== undefined ? { isActive: filters.isActive } : {}),
-      },
-      include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(filters?: { type?: MerchandiseType; isActive?: boolean; page?: number; limit?: number }) {
+    const page  = filters?.page  ?? 1;
+    const limit = filters?.limit ?? 20;
+    const skip  = (page - 1) * limit;
+    const where = {
+      ...(filters?.type     !== undefined ? { type:     filters.type }     : {}),
+      ...(filters?.isActive !== undefined ? { isActive: filters.isActive } : {}),
+    };
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.merchandise.findMany({
+        where,
+        include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.merchandise.count({ where }),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async findOne(id: string) {
@@ -91,22 +101,27 @@ export class MerchandiseService {
 
   // ── Public (cached) ───────────────────────────────────────────────────────
 
-  async publicList(type?: MerchandiseType) {
-    const key    = type ? `merchandise:list:${type}` : this.listKey();
-    const cached = await this.redis.get(key);
+  async publicList(type?: MerchandiseType, page = 1, limit = 12) {
+    const skip  = (page - 1) * limit;
+    const where = { isActive: true, ...(type ? { type } : {}) };
+    const cacheKey = `merchandise:list:${type ?? 'all'}:p${page}`;
+
+    const cached = await this.redis.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
-    const items = await this.prisma.merchandise.findMany({
-      where: {
-        isActive: true,
-        ...(type ? { type } : {}),
-      },
-      include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    await this.redis.set(key, JSON.stringify(items), LIST_TTL);
-    return items;
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.merchandise.findMany({
+        where,
+        include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.merchandise.count({ where }),
+    ]);
+    const result = { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+    await this.redis.set(cacheKey, JSON.stringify(result), LIST_TTL);
+    return result;
   }
 
   async publicDetail(slug: string) {

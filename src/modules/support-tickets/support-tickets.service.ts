@@ -61,14 +61,20 @@ export class SupportTicketsService {
     });
   }
 
-  async getMyTickets(userId: string) {
-    return this.prisma.supportTicket.findMany({
-      where: { userId },
-      include: {
-        messages: { orderBy: { createdAt: 'asc' } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async getMyTickets(userId: string, page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const where = { userId };
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.supportTicket.findMany({
+        where,
+        include: { messages: { orderBy: { createdAt: 'asc' } } },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.supportTicket.count({ where }),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async getMyTicketById(userId: string, ticketId: string) {
@@ -82,13 +88,17 @@ export class SupportTicketsService {
     return ticket;
   }
 
-  async getAllTickets() {
-    return this.prisma.supportTicket.findMany({
-      include: {
-        user: true,
-        messages: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async getAllTickets(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.supportTicket.findMany({
+        include: { user: true, messages: true },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.supportTicket.count(),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 }
