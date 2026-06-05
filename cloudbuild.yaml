@@ -8,8 +8,8 @@ steps:
     - container
     - clusters
     - get-credentials
-    - console-cluster
-    - --region=asia-southeast1
+    - console-shop-cluster
+    - --zone=asia-southeast1-c
     - --project=$PROJECT_ID
 
 # 2️⃣ Update Kubernetes secret (Omise keys removed — now owned by payment-gateway)
@@ -37,8 +37,8 @@ steps:
         --from-literal=GATEWAY_URL="$_GATEWAY_URL" \
         --dry-run=client -o yaml | kubectl apply -f -
   env:
-    - CLOUDSDK_COMPUTE_REGION=asia-southeast1
-    - CLOUDSDK_CONTAINER_CLUSTER=console-cluster
+    - CLOUDSDK_COMPUTE_ZONE=asia-southeast1-c
+    - CLOUDSDK_CONTAINER_CLUSTER=console-shop-cluster
 
 # 3️⃣ Build image
 - name: 'gcr.io/cloud-builders/docker'
@@ -63,8 +63,8 @@ steps:
     - console-backend=asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA
     - --namespace=console-shop
   env:
-    - CLOUDSDK_COMPUTE_REGION=asia-southeast1
-    - CLOUDSDK_CONTAINER_CLUSTER=console-cluster
+    - CLOUDSDK_COMPUTE_ZONE=asia-southeast1-c
+    - CLOUDSDK_CONTAINER_CLUSTER=console-shop-cluster
 
 images:
   - asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA
