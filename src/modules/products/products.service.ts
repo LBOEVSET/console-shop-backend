@@ -42,7 +42,7 @@ export class ProductsService {
       `p${dto.page ?? 1}`,
       `l${dto.limit ?? 10}`,
       dto.searchWord ? `q:${dto.searchWord}` : '',
-      dto.platformId ? `plat:${dto.platformId}` : '',
+      dto.platform ? `plat:${dto.platform.toLowerCase()}` : '',
       dto.categoryIds?.length ? `cats:${[...dto.categoryIds].sort().join(',')}` : '',
       dto.inStock !== undefined ? `stock:${dto.inStock}` : '',
       dto.minPrice !== undefined ? `min:${dto.minPrice}` : '',
@@ -82,12 +82,16 @@ export class ProductsService {
 
       const conditions = await this.productListQueryBuilder(dto);
       let orderByClause = Prisma.sql`ORDER BY p."createdAt" DESC`;
-      if(dto.searchWord){
+      if (dto.searchWord) {
+        const prefixQuery = dto.searchWord
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .map((w: string) => `${w}:*`)
+          .join(' & ');
         orderByClause = Prisma.sql`ORDER BY
-          CASE
-            WHEN COALESCE(${dto.searchWord}, '') <> ''
-            THEN ts_rank(p.search, websearch_to_tsquery('english', ${dto.searchWord}))
-          END DESC`;
+          ts_rank(p.search, to_tsquery('english', ${prefixQuery})) DESC,
+          p."createdAt" DESC`;
       }
 
       const products: any[] = await this.prisma.$queryRaw`
@@ -253,8 +257,20 @@ export class ProductsService {
     ];
 
     if (dto.searchWord) {
+      // Build a prefix-match tsquery: each token becomes "token:*" so
+      // "slay" matches "Slayer", "sla" matches "Slayers", etc.
+      // Falls back to a simple ILIKE if the word produces no ts tokens.
+      const prefixQuery = dto.searchWord
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map(w => `${w}:*`)
+        .join(' & ');
       conditions.push(
-        Prisma.sql`p.search @@ websearch_to_tsquery('english', ${dto.searchWord})`
+        Prisma.sql`(
+          p.search @@ to_tsquery('english', ${prefixQuery})
+          OR p.title ILIKE ${'%' + dto.searchWord + '%'}
+        )`
       )
     }
 
@@ -264,9 +280,9 @@ export class ProductsService {
       )
     }
 
-    if (dto.platformId) {
+    if (dto.platform) {
       conditions.push(
-        Prisma.sql`p."platformId"::text = ${dto.platformId}`
+        Prisma.sql`LOWER(pl.name) = LOWER(${dto.platform})`
       )
     }
 

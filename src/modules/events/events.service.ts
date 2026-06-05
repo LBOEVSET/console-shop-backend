@@ -32,7 +32,7 @@ export class EventsService {
       ...(filters?.category !== undefined ? { category: filters.category } : {}),
       ...(filters?.isActive !== undefined ? { isActive: filters.isActive } : {}),
     };
-    const [data, total] = await this.prisma.$transaction([
+    const [data, total] = await Promise.all([
       this.prisma.event.findMany({
         where,
         include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },
@@ -112,7 +112,7 @@ export class EventsService {
       if (cached) return JSON.parse(cached);
     }
 
-    const [data, total] = await this.prisma.$transaction([
+    const [data, total] = await Promise.all([
       this.prisma.event.findMany({
         where,
         include: { media: { orderBy: { sortOrder: 'asc' }, take: 1 } },

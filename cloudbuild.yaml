@@ -12,7 +12,7 @@ steps:
     - --region=asia-southeast1
     - --project=$PROJECT_ID
 
-# 2️⃣ Update Kubernetes secret
+# 2️⃣ Update Kubernetes secret (Omise keys removed — now owned by payment-gateway)
 - name: 'gcr.io/cloud-builders/kubectl'
   id: 'update-secret'
   entrypoint: bash
@@ -20,12 +20,10 @@ steps:
     - -c
     - |
       kubectl create secret generic backend-secret \
+        --namespace=console-shop \
         --from-literal=DATABASE_URL="$_DATABASE_URL" \
         --from-literal=JWT_SECRET="$_JWT_SECRET" \
         --from-literal=JWT_REFRESH_SECRET="$_JWT_REFRESH_SECRET" \
-        --from-literal=OMISE_SECRET_KEY="$_OMISE_SECRET_KEY" \
-        --from-literal=OMISE_PUBLIC_KEY="$_OMISE_PUBLIC_KEY" \
-        --from-literal=OMISE_WEBHOOK_SECRET="$_OMISE_WEBHOOK_SECRET" \
         --from-literal=REDIS_HOST="$_REDIS_HOST" \
         --from-literal=REDIS_PORT="$_REDIS_PORT" \
         --from-literal=PORT="$_PORT" \
@@ -36,6 +34,7 @@ steps:
         --from-literal=VONAGE_URL_SEND_OTP="$_VONAGE_URL_SEND_OTP" \
         --from-literal=VONAGE_URL_VERIFY_OTP="$_VONAGE_URL_VERIFY_OTP" \
         --from-literal=WEB_URL="$_WEB_URL" \
+        --from-literal=GATEWAY_URL="$_GATEWAY_URL" \
         --dry-run=client -o yaml | kubectl apply -f -
   env:
     - CLOUDSDK_COMPUTE_REGION=asia-southeast1
@@ -44,36 +43,31 @@ steps:
 # 3️⃣ Build image
 - name: 'gcr.io/cloud-builders/docker'
   args:
-    [
-      'build',
-      '-t',
-      'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA',
-      '.'
-    ]
+    - build
+    - -t
+    - asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA
+    - .
 
 # 4️⃣ Push image
 - name: 'gcr.io/cloud-builders/docker'
   args:
-    [
-      'push',
-      'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
-    ]
+    - push
+    - asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA
 
 # 5️⃣ Deploy new image
 - name: 'gcr.io/cloud-builders/kubectl'
   args:
-    [
-      'set',
-      'image',
-      'deployment/console-backend',
-      'console-backend=asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
-    ]
+    - set
+    - image
+    - deployment/console-backend
+    - console-backend=asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA
+    - --namespace=console-shop
   env:
     - CLOUDSDK_COMPUTE_REGION=asia-southeast1
     - CLOUDSDK_CONTAINER_CLUSTER=console-cluster
 
 images:
-- 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA'
+  - asia-southeast1-docker.pkg.dev/$PROJECT_ID/console-shop/backend:$SHORT_SHA
 
 options:
   logging: CLOUD_LOGGING_ONLY

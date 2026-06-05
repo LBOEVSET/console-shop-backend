@@ -1,11 +1,7 @@
-import { Module } from '@nestjs/common';
-import { OmiseService } from './omise.service';
-import { PaymentsController } from './payments.controller';
-import { PaymentsService } from './payments.service';
-
-@Module({
-  controllers: [PaymentsController],
-  providers: [PaymentsService, OmiseService],
-  exports: [OmiseService],
-})
-export class PaymentsModule {}
+/**
+ * @deprecated — DELETE THIS FILE
+ *
+ * PaymentsModule is NOT registered in AppModule and never will be.
+ * All payment endpoints live in the payment-gateway (Spring Boot) service.
+ * Delete this entire src/modules/payments/ directory.
+ */

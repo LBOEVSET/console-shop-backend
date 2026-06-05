@@ -3,6 +3,7 @@ import {
   Post,
   Body,
   Get,
+  Header,
   Param,
   Patch,
   Query,
@@ -29,12 +30,14 @@ export class ProductsController {
 
   @Public()
   @Get('platforms')
+  @Header('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400')
   findAllPlatforms() {
     return this.productsService.findAllPlatforms();
   }
 
   @Public()
   @Get('categories')
+  @Header('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400')
   findAllCategories() {
     return this.productsService.findAllCategories();
   }

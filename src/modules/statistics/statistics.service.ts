@@ -50,6 +50,34 @@ export class StatisticsService {
     return { ok: true };
   }
 
+  /**
+   * Batch-record multiple events in one request.
+   * All stat rows are inserted with createMany in a single DB round-trip.
+   * Counter increments and geo lookups still run fire-and-forget per event.
+   */
+  async recordBatch(dtos: CreateStatisticDto[], ip?: string) {
+    if (!dtos?.length) return { ok: true, count: 0 };
+
+    // One createMany for all rows — much cheaper than N individual inserts
+    await this.prisma.statistic.createMany({
+      data: dtos.map(dto => ({
+        entityType: dto.entityType,
+        entityId:   dto.entityId,
+        eventType:  dto.eventType,
+        userId:     dto.userId  ?? null,
+        guestId:    dto.guestId ?? null,
+        ip:         ip          ?? null,
+      })),
+    });
+
+    // Counter increments — fire-and-forget, one per event
+    for (const dto of dtos) {
+      this.incrementCounter(dto.entityType, dto.entityId, dto.eventType).catch(() => {});
+    }
+
+    return { ok: true, count: dtos.length };
+  }
+
   private async incrementCounter(
     entityType: StatEntityType,
     entityId:   string,
@@ -68,7 +96,23 @@ export class StatisticsService {
     });
   }
 
+  /** Returns true for loopback / RFC-1918 / link-local addresses. */
+  private isPrivateIp(ip: string): boolean {
+    return (
+      ip === '127.0.0.1' ||
+      ip === '::1' ||
+      ip.startsWith('10.') ||
+      ip.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(ip) ||
+      ip.startsWith('169.254.')
+    );
+  }
+
   private async resolveGeo(statId: string, ip: string) {
+    // Skip private/loopback IPs — ip-api.com returns "private range" for these
+    // and the round-trip adds latency with no useful data returned.
+    if (this.isPrivateIp(ip)) return;
+
     try {
       const res = await fetch(
         `http://ip-api.com/json/${ip}?fields=status,country,regionName,city,lat,lon,org`,

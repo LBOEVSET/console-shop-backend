@@ -26,9 +26,24 @@ export class StatisticsController {
     @Body() dto: CreateStatisticDto,
     @Ip() ip: string,
   ) {
-    // Strip IPv4-mapped IPv6 prefix (::ffff:x.x.x.x → x.x.x.x)
     const cleanIp = ip?.replace(/^::ffff:/, '') ?? undefined;
     return this.service.record(dto, cleanIp);
+  }
+
+  /**
+   * Public — record multiple events in one request.
+   * The frontend batches viewport/click events and flushes them here every
+   * few seconds instead of firing one request per product per event.
+   */
+  @Public()
+  @Post('batch')
+  @HttpCode(HttpStatus.OK)
+  recordBatch(
+    @Body() body: { events: CreateStatisticDto[] },
+    @Ip() ip: string,
+  ) {
+    const cleanIp = ip?.replace(/^::ffff:/, '') ?? undefined;
+    return this.service.recordBatch(body.events, cleanIp);
   }
 
   /** Admin — paginated raw event list */

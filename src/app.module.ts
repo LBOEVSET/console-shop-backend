@@ -19,7 +19,7 @@ import { THROTTLE_CONFIG } from './core/throttler.config';
 import { ProfileModule } from './modules/profile/profile.module';
 import { LoggerModule } from './core/logger/logger.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { PaymentsModule } from './modules/payments/payments.module';
+// PaymentsModule removed — payment handling moved to payment-gateway (Spring Boot)
 import { ArticlesModule } from './modules/articles/articles.module';
 import { HealthCheckModule } from './modules/health-check/health-check.module';
 import { StatisticsModule } from './modules/statistics/statistics.module';
@@ -40,7 +40,6 @@ import { ChatModule } from './modules/chat/chat.module';
     SupportTicketsModule,
     DashboardModule,
     ProfileModule,
-    PaymentsModule,
     ArticlesModule,
     StatisticsModule,
     EventsModule,
@@ -55,10 +54,6 @@ import { ChatModule } from './modules/chat/chat.module';
       }),
     }),
     ThrottlerModule.forRoot([
-      {
-        ttl: 60,
-        limit: 100,
-      },
       {
         name: 'default',
         ...THROTTLE_CONFIG.DEFAULT,

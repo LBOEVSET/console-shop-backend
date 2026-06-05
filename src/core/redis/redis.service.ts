@@ -62,14 +62,14 @@ export class RedisService
 
   async get(key: string) {
     const requestId = this.requestContext.get<string>('requestId');
-    this.logger.logCacheRequest({ requestId, action: 'GET', key });
-
     const start = Date.now();
     const result = await this.client.get(key);
     const duration = Date.now() - start;
-    
+
+    // Log key + duration only — omit data payload to avoid serialising large
+    // cached responses (product lists, etc.) into every log line.
     if (result) {
-      this.logger.logCacheHit({ requestId, key, durationMs: duration, data: result });
+      this.logger.logCacheHit({ requestId, key, durationMs: duration });
     } else {
       this.logger.logCacheMiss({ requestId, key, durationMs: duration });
     }
@@ -88,14 +88,7 @@ export class RedisService
     }
 
     const duration = Date.now() - start;
-
-    this.logger.logCacheSet({
-      requestId,
-      key,
-      ttl,
-      durationMs: duration,
-      data: value
-    });
+    this.logger.logCacheSet({ requestId, key, ttl, durationMs: duration });
   }
 
   async del(key: string) {
@@ -104,11 +97,6 @@ export class RedisService
 
     await this.client.del(key);
     const duration = Date.now() - start;
-
-    this.logger.logCacheDelete({
-      requestId,
-      key,
-      durationMs: duration,
-    });
+    this.logger.logCacheDelete({ requestId, key, durationMs: duration });
   }
 }

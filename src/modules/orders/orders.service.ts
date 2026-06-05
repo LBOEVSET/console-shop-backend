@@ -1,23 +1,21 @@
 import {
   Injectable,
   BadRequestException,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../core/prisma/prisma.service';
-import { RedisService } from '../../core/redis/redis.service';
 import { CheckoutDto } from './dto/checkout.dto';
 import { EventCheckoutDto } from './dto/event-checkout.dto';
 import { Prisma, OrderStatus, PaymentStatus } from '@prisma/client';
 import { OrderStateTransitions } from './enums/order-state.machine';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { OmiseService } from '../payments/omise.service';
 import { CartService } from '../cart/cart.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private prisma: PrismaService,
-    private omiseService: OmiseService,
     private cartService: CartService,
   ) {}
 
@@ -108,37 +106,10 @@ export class OrdersService {
     // the cart is gone even if the user closes the browser mid-payment.
     await this.cartService.clearCart(userId);
 
-    /* ---------------------------- */
-    /* PROMPTPAY FLOW              */
-    /* ---------------------------- */
-
-    if (dto.paymentMethod === 'PROMPTPAY') {
-      const charge = await this.omiseService.createPromptPayCharge(
-        Number(total),
-        order.id,
-      );
-
-      await this.prisma.payment.update({
-        where: { orderId: order.id },
-        data: {
-          chargeId: charge.id,
-          rawPayload: charge,
-        },
-      });
-
-      return {
-        orderId: order.id,
-        qrCode: charge.source?.scannable_code?.image?.download_uri,
-      };
-    }
-
-    /* ---------------------------- */
-    /* CARD FLOW                   */
-    /* ---------------------------- */
-
-    return {
-      orderId: order.id,
-    };
+    // Always return only orderId. The frontend calls the payment gateway
+    // directly for both CARD (/payments/card) and PROMPTPAY (/payments/promptpay).
+    // Omise charges are created exclusively in the payment gateway service.
+    return { orderId: order.id };
   }
 
   async eventCheckout(userId: string, dto: EventCheckoutDto) {
@@ -189,15 +160,6 @@ export class OrdersService {
 
       return order;
     });
-
-    if (dto.paymentMethod === 'PROMPTPAY') {
-      const charge = await this.omiseService.createPromptPayCharge(Number(total), order.id);
-      await this.prisma.payment.update({
-        where: { orderId: order.id },
-        data: { chargeId: charge.id, rawPayload: charge },
-      });
-      return { orderId: order.id, qrCode: charge.source?.scannable_code?.image?.download_uri };
-    }
 
     return { orderId: order.id };
   }

@@ -130,8 +130,6 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const guestId = req?.user?.guestId;
-    console.log('ADMIN LOGIN');
-    console.log(dto);
     const tokens = await this.authService.login(dto, guestId);
 
     res.cookie('accessToken', tokens.accessToken, this.cookieOpts(15 * 60 * 1000));

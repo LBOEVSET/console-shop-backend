@@ -26,6 +26,16 @@ export class ProfileController {
     return this.profileService.getProfile(req.user.id);
   }
 
+  /**
+   * GET /profile/me — returns profile + cart in one request.
+   * The frontend calls this once on app init instead of two separate
+   * /profile and /cart round trips, cutting cold-load latency in half.
+   */
+  @Get('me')
+  getMe(@Req() req: any) {
+    return this.profileService.getMe(req.user.id, req.user.guestId);
+  }
+
   @Patch()
   updateProfile(@Req() req: any, @Body() dto: any) {
     return this.profileService.updateProfile(
@@ -60,8 +70,8 @@ export class ProfileController {
   }
 
   @Delete('address/:id')
-  deleteAddress(@Param('id') id: string) {
-    return this.profileService.deleteAddress(id);
+  deleteAddress(@Req() req: any, @Param('id') id: string) {
+    return this.profileService.deleteAddress(req.user.id, id);
   }
 
   @Post('upload')

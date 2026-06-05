@@ -13,19 +13,29 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
+      // API Gateway (internal — routes all external traffic)
+      process.env.GATEWAY_URL || 'http://localhost:8000',
+      // Direct browser origins (kept for local dev)
       process.env.WEB_URL || 'https://localhost:3022',
-      "http://localhost:3022",
-      "https://localhost:3022",
+      'http://localhost:3022',
+      'https://localhost:3022',
       // Admin panel
-      process.env.ADMIN_URL || "http://localhost:3030",
-      "http://localhost:3030",
+      process.env.ADMIN_URL || 'http://localhost:3030',
+      'http://localhost:3030',
     ],
     credentials: true,
-    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "Accept"
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      // Trusted headers forwarded by the API Gateway
+      'X-User-ID',
+      'X-User-Role',
+      'X-User-Email',
+      'X-Guest-ID',
+      'X-Internal-Secret',
+      'X-Request-ID',
     ],
   });
   
@@ -50,17 +60,7 @@ async function bootstrap() {
   const requestContext = app.get(RequestContextService);
   app.use(requestIdMiddleware(requestContext));
 
-  /**
-   * IMPORTANT:
-   * Preserve rawBody for Omise webhook signature verification
-   */
-  app.use(
-    bodyParser.json({
-      verify: (req: any, _res, buf) => {
-        req.rawBody = buf;
-      },
-    }),
-  );
+  app.use(bodyParser.json());
 
   // Global validation
   app.useGlobalPipes(

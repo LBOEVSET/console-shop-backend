@@ -1,10 +1,10 @@
 import {
   IsString,
   IsNumber,
-  IsUUID,
   IsBoolean,
   IsOptional,
   IsArray,
+  IsUUID,
   IsEnum,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
@@ -41,8 +41,8 @@ export class FindProductDto {
   maxPrice?: number;
 
   @IsOptional()
-  @IsUUID()
-  platformId?: string;
+  @IsString()
+  platform?: string;   // filter by platform name (e.g. "Nintendo Switch") — better for SEO URLs
 
   // Multi-select genres: ?categoryIds=uuid1&categoryIds=uuid2
   @IsOptional()
