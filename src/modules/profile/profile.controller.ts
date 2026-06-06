@@ -6,20 +6,32 @@ import {
   Delete,
   Body,
   Req,
+  Res,
   Param,
+  Query,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
+import { Response } from 'express';
+import { createReadStream, existsSync } from 'fs';
+import { join } from 'path';
 import { ProfileService } from './profile.service';
+import { GcsService } from '../../core/gcs/gcs.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UseInterceptors, UploadedFile } from '@nestjs/common';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
 
 @Controller({
   path: 'profile',
   version: '1',
 })
 export class ProfileController {
-  constructor(private readonly profileService: ProfileService) {}
+  constructor(
+    private readonly profileService: ProfileService,
+    private readonly gcsService: GcsService,
+  ) {}
 
   @Get()
   getProfile(@Req() req: any) {
@@ -74,21 +86,90 @@ export class ProfileController {
     return this.profileService.deleteAddress(req.user.id, id);
   }
 
+  /**
+   * POST /profile/upload
+   * Uploads file to Google Cloud Storage and returns the public URL.
+   * Frontend then calls PATCH /profile with { profileImage: url } or { backgroundImage: url }.
+   */
   @Post('upload')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, callback) => {
-          const uniqueName =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          callback(null, uniqueName + extname(file.originalname));
-        },
-      }),
-    }),
-  )
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
-    return { file };
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('No file provided.');
+
+    const ALLOWED_MIME = new Set([
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'image/avif',
+      'image/bmp',
+    ]);
+
+    if (!ALLOWED_MIME.has(file.mimetype)) {
+      throw new BadRequestException(
+        `Unsupported file type "${file.mimetype}". ` +
+        'Allowed formats: JPEG, PNG, WebP, GIF, AVIF, BMP.',
+      );
+    }
+
+    const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+    if (file.size > MAX_SIZE_BYTES) {
+      throw new BadRequestException('File too large. Maximum size is 10 MB.');
+    }
+
+    const url = await this.gcsService.uploadFile(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      'profile',
+    );
+    return { url };
+  }
+
+  /**
+   * GET /profile/file/:filename
+   * Serves locally-stored uploads (disk fallback when GCS_BUCKET_NAME is not set).
+   * In production on GKE, GCS is used and this endpoint is never reached.
+   */
+  @Get('file/:filename')
+  serveFile(@Param('filename') filename: string, @Res() res: Response) {
+    const filePath = join(process.cwd(), 'uploads', filename);
+    if (!existsSync(filePath)) {
+      throw new NotFoundException('File not found.');
+    }
+    return res.sendFile(filePath);
+  }
+
+  // ─── Admin ────────────────────────────────────────────────────────────────
+
+  @Roles(UserRole.ADMIN)
+  @Get('admin/users')
+  getAllUsers(
+    @Query('page')   page?:   string,
+    @Query('limit')  limit?:  string,
+    @Query('search') search?: string,
+  ) {
+    return this.profileService.getAllUsers(
+      Number(page ?? 1),
+      Number(limit ?? 20),
+      search,
+    );
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Get('admin/users/:id')
+  getUserById(@Param('id') id: string) {
+    return this.profileService.getUserById(id);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Patch('admin/users/:id/status')
+  updateUserStatus(
+    @Param('id') id: string,
+    @Body('status') status: number,
+  ) {
+    return this.profileService.updateUserStatus(id, status);
   }
 
 }

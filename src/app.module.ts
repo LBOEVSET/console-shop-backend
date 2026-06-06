@@ -26,6 +26,8 @@ import { StatisticsModule } from './modules/statistics/statistics.module';
 import { EventsModule } from './modules/events/events.module';
 import { MerchandiseModule } from './modules/merchandise/merchandise.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { GcsModule } from './core/gcs/gcs.module';
+import { SubscriptionModule } from './modules/subscription/subscription.module';
 
 @Module({
   imports: [
@@ -45,6 +47,8 @@ import { ChatModule } from './modules/chat/chat.module';
     EventsModule,
     MerchandiseModule,
     ChatModule,
+    GcsModule,
+    SubscriptionModule,
     LoggerModule,
     JwtModule.registerAsync({
       inject: [ConfigService],

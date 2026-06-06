@@ -13,6 +13,18 @@ export class ChatService {
   private queueKey = 'chat:waiting';
 
   async createSession(customerId: string) {
+    // Reuse any existing open session for this user rather than creating
+    // a duplicate every time the chat widget is opened.
+    const existing = await this.prisma.chatSession.findFirst({
+      where: {
+        customerId,
+        status: { in: [ChatStatus.WAITING, ChatStatus.ACTIVE] },
+      },
+      orderBy: { startedAt: 'desc' },
+    });
+
+    if (existing) return existing;
+
     const session = await this.prisma.chatSession.create({
       data: {
         customerId,

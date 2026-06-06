@@ -82,6 +82,8 @@ jobs:
             --from-literal=VONAGE_URL_VERIFY_OTP="$VONAGE_URL_VERIFY_OTP" \
             --from-literal=WEB_URL="$WEB_URL" \
             --from-literal=GATEWAY_URL="$GATEWAY_URL" \
+            --from-literal=GCS_BUCKET_NAME="$GCS_BUCKET_NAME" \
+            --from-literal=ZONE="$ZONE" \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Run database migrations

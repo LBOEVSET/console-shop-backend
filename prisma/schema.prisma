@@ -20,20 +20,70 @@ model User {
   profileImage    String?
   backgroundImage String?
   phone           String?
+  birthday        DateTime?
   accessToken     String?
   refreshToken    String?
   vipExpiredAt    DateTime?
   status          Int             @default(1)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @default(now()) @updatedAt
-  addresses       Address[]
-  adminSessions   ChatSession[]   @relation("AdminSessions")
-  chatSessions    ChatSession[]   @relation("CustomerSessions")
-  orders          Order[]
-  reviews         Review[]
-  tickets         SupportTicket[]
+  addresses                Address[]
+  adminSessions            ChatSession[]            @relation("AdminSessions")
+  chatSessions             ChatSession[]            @relation("CustomerSessions")
+  orders                   Order[]
+  reviews                  Review[]
+  tickets                  SupportTicket[]
+  subscriptionTransactions SubscriptionTransaction[]
 
   @@index([status])
+}
+
+// ─── Subscription ─────────────────────────────────────────────────────────────
+
+model SubscriptionPlan {
+  id           String                   @id @default(uuid())
+  name         String                   @unique  // "Normal", "VIP", "Prestige"
+  slug         String                   @unique  // "normal", "vip", "prestige"
+  priceUsd     Decimal                  @default(0) @db.Decimal(10, 2)
+  durationDays Int                      @default(30)
+  description  String?
+  color        String                   @default("#6366f1")
+  badgeIcon    String                   @default("⭐")
+  sortOrder    Int                      @default(0)
+  isActive     Boolean                  @default(true)
+  createdAt    DateTime                 @default(now())
+  transactions SubscriptionTransaction[]
+}
+
+model SubscriptionTransaction {
+  id         String             @id @default(uuid())
+  userId     String
+  planId     String
+  startDate  DateTime
+  endDate    DateTime
+  status     SubscriptionStatus @default(ACTIVE)
+  amountPaid Decimal            @db.Decimal(10, 2)
+  note       String?
+  createdAt  DateTime           @default(now())
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan       SubscriptionPlan   @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([endDate])
+}
+
+// ─── Spending Tier ────────────────────────────────────────────────────────────
+
+model SpendingTier {
+  id        String   @id @default(uuid())
+  name      String   @unique  // "Bronze", "Silver", "Gold", "Platinum", "Diamond"
+  slug      String   @unique
+  minSpend  Decimal  @db.Decimal(10, 2)
+  maxSpend  Decimal? @db.Decimal(10, 2)  // null = no upper limit (Diamond)
+  color     String                        // hex or tailwind color token
+  badgeIcon String                        // emoji
+  sortOrder Int      @default(0)
 }
 
 model UserStatus {
@@ -302,6 +352,12 @@ model ChatMessage {
 enum UserRole {
   CUSTOMER
   ADMIN
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
 }
 
 enum OrderStatus {

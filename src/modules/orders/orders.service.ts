@@ -193,7 +193,8 @@ export class OrdersService {
 
   async getMyOrders(userId: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
-    const where = { userId };
+    // Exclude internal subscription orders — these are THB payments, not product purchases
+    const where = { userId, NOT: { orderNumber: { startsWith: 'SUB-' } } };
     const [orders, total] = await this.prisma.$transaction([
       this.prisma.order.findMany({
         where,
