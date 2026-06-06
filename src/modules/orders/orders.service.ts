@@ -220,12 +220,7 @@ export class OrdersService {
       this.prisma.order.count({ where }),
     ]);
 
-    const data = orders.map(order => ({
-      ...order,
-      item: order.items[0] ?? null,
-      items: undefined,
-    }));
-    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+    return { data: orders, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async getAllOrders(page = 1, limit = 20) {
@@ -270,11 +265,7 @@ export class OrdersService {
       return null;
     }
 
-    return {
-      ...orders,
-      item: orders.items[0] ?? null,
-      items: undefined,
-    };
+    return orders;
   }
 
 }

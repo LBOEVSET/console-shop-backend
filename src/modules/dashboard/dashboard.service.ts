@@ -7,10 +7,20 @@ export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
   async getOverview() {
+    // Count revenue from all orders where payment was received
+    // (PAID → PROCESSING → SHIPPED → COMPLETED). Excludes PENDING_PAYMENT,
+    // CANCELLED, and FAILED which have not been paid.
+    const PAID_STATUSES = [
+      OrderStatus.PAID,
+      OrderStatus.PROCESSING,
+      OrderStatus.SHIPPED,
+      OrderStatus.COMPLETED,
+    ];
+
     const revenue = await this.prisma.order.aggregate({
       _sum: { total: true },
       where: {
-        status: OrderStatus.COMPLETED,
+        status: { in: PAID_STATUSES },
       },
     });
 
@@ -22,6 +32,12 @@ export class DashboardService {
       },
     });
 
+    const pendingOrders = await this.prisma.order.count({
+      where: {
+        status: OrderStatus.PENDING_PAYMENT,
+      },
+    });
+
     const totalUsers = await this.prisma.user.count();
 
     const totalProducts = await this.prisma.product.count();
@@ -30,6 +46,7 @@ export class DashboardService {
       revenue: revenue._sum.total || 0,
       totalOrders,
       paidOrders,
+      pendingOrders,
       totalUsers,
       totalProducts,
     };
@@ -40,7 +57,7 @@ export class DashboardService {
       SELECT DATE("createdAt") as date,
              SUM(total) as revenue
       FROM "Order"
-      WHERE status = 'COMPLETED'
+      WHERE status IN ('PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED')
       GROUP BY DATE("createdAt")
       ORDER BY DATE("createdAt") ASC
     `;
